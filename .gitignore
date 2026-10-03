@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+*.prof
+sorties*/
+etat_courant/
+etat_nouveau/
+frags/
+cache/

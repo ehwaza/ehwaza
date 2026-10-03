@@ -1,0 +1,107 @@
+# Fragment GitHub du bebe — N fragments en parallele, puis fusion.
+#
+# Note ToS (exigee par LYNX) : ces runners servent de BENCHMARKS du projet bebe.
+# Tout le calcul est lie au projet de ce depot (entrainement + mesure de son
+# propre modele). Aucun usage hors projet.
+#
+# Echange d'etat : Release "etat-courant" (assets = paquet etat.py + heldout.npz).
+# Chaque fragment : restore -> entraine (budget < 6h) -> upload.
+# Le job fusion : telecharge les fragments, fusionne, republie etat-courant.
+
+name: fragment-bebe
+
+on:
+  workflow_dispatch:
+    inputs:
+      n_interactions:
+        description: "interactions par fragment"
+        default: "20000"
+      budget_minutes:
+        description: "budget temps par fragment (min, garder < 330)"
+        default: "240"
+      data_seed_base:
+        description: "seed_data de base (chaque shard prend base+shard)"
+        default: "10000"
+
+permissions:
+  contents: write
+
+jobs:
+  fragments:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: dependances (torch CPU)
+        run: |
+          pip install --quiet torch --index-url https://download.pytorch.org/whl/cpu
+          pip install --quiet numpy
+      - name: restaurer etat-courant (si existe)
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p etat_courant
+          gh release download etat-courant -D etat_courant --clobber \
+            || echo "pas d'etat-courant : le bebe nait"
+      - name: entrainer le fragment
+        run: |
+          PARENT=""
+          INIT=1234
+          if [ -f etat_courant/meta.json ]; then
+            PARENT="--parent etat_courant"
+            INIT=$(python -c "import json;print(json.load(open('etat_courant/meta.json'))['seeds']['init'])")
+          fi
+          DATA=$(( ${{ github.event.inputs.data_seed_base }} + ${{ matrix.shard }} ))
+          python fragment.py \
+            --fragment "gh-${{ github.run_id }}-s${{ matrix.shard }}" \
+            --init-seed "$INIT" \
+            --data-seed "$DATA" \
+            --n ${{ github.event.inputs.n_interactions }} \
+            --budget-seconds $(( ${{ github.event.inputs.budget_minutes }} * 60 )) \
+            --code-sha "${{ github.sha }}" \
+            --out "frags/s${{ matrix.shard }}" $PARENT
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frag-${{ matrix.shard }}
+          path: frags/s${{ matrix.shard }}
+          retention-days: 7
+
+  fusion:
+    needs: fragments
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: dependances
+        run: |
+          pip install --quiet torch --index-url https://download.pytorch.org/whl/cpu
+          pip install --quiet numpy
+      - uses: actions/download-artifact@v4
+        with:
+          path: frags
+          pattern: frag-*
+      - name: fusionner + verdict
+        run: |
+          DIRS=$(find frags -maxdepth 2 -name meta.json -printf '%h\n' | sort)
+          echo "fragments : $DIRS"
+          python fusion.py $DIRS --heldout heldout.npz --out etat_nouveau
+      - name: publier etat-courant
+        if: ${{ success() && hashFiles('etat_nouveau/meta.json') != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cp heldout.npz etat_nouveau/
+          gh release delete etat-courant --yes --cleanup-tag || true
+          gh release create etat-courant etat_nouveau/* \
+            --title "etat-courant" \
+            --notes "code_sha=${{ github.sha }}  run=${{ github.run_id }}"

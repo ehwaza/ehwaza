@@ -1,0 +1,112 @@
+# -*- coding: utf-8 -*-
+"""fragment.py — UN FRAGMENT du bebe, executable localement OU sur un runner GitHub.
+
+Chaine : restaure un parent (ou nait d'une seed_init) -> apprend en ligne (bras A)
+-> sauvegarde un paquet d'etat conforme a etat.py. C'est le code que la CI lance.
+
+Contraintes respectees :
+  - budget de temps (--budget-seconds) : la session GitHub est plafonnee a 6h,
+    on coupe AVANT et on sauvegarde un paquet propre.
+  - seed_data PAR fragment (jamais partagee) ; seed_init = celle du parent.
+  - memoire consolidee (etat.MemoireConsolidee) -> debit qui ne s'effondre pas.
+
+Usage :
+  python fragment.py --fragment local --init-seed 1234 --data-seed 1001 \
+      --n 5000 --out sorties_frag/local [--parent <dossier_paquet>] [--budget-seconds 3600]
+"""
+import argparse
+import json
+import random
+import time
+from pathlib import Path
+
+import numpy as np
+import torch
+
+import banc
+import etat
+
+
+def run_fragment(name, init_seed, data_seed, n_inter, out_dir,
+                 parent_dir=None, pool_n=1200, eval_every=100,
+                 budget_seconds=None, code_sha="local", device="cpu"):
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    parent_n = 0
+    parent_id = "root"
+
+    if parent_dir:
+        b = etat.load_bundle(parent_dir, device)
+        model, mem = b["model"], b["mem"]
+        parent_n = int(b["meta"].get("parent_n", 0)) + len(b["hist"].get("ok", []))
+        parent_id = b["meta"].get("fragment", "?")
+    else:
+        torch.manual_seed(int(init_seed))
+        model = banc.Bebe().to(device)
+        mem = etat.MemoireConsolidee(k=5)
+
+    opt = torch.optim.SGD(model.parameters(), lr=3e-4)
+    lossf = torch.nn.CrossEntropyLoss()
+    rng = random.Random(int(data_seed))
+    pool = [banc.gen_item(rng) for _ in range(int(pool_n))]
+    items = [pool[i % pool_n] for i in range(int(n_inter))]
+
+    hist = {"conf": [], "ok": [], "ece": []}
+    confs, oks = [], []
+    t0 = time.time()
+    i = 0
+    for i, (src, cible, _) in enumerate(items):
+        if budget_seconds and (time.time() - t0) > budget_seconds:
+            print(f"[budget] coupe a {i} interactions ({budget_seconds}s)", flush=True)
+            break
+        ids = banc.to_ids(src).unsqueeze(0).to(device)
+        y = banc.VOCAB[cible]
+        model.train()
+        logit = model(ids)
+        p = torch.softmax(logit, 1)[0]
+        conf, pred = float(p.max()), int(p.argmax())
+        maj, sk = mem.consult(src)
+        if maj is not None and sk > 0.5:
+            conf = min(0.99, max(conf, sk))
+        ok = 1.0 if pred == y else 0.0
+        mem.add(src, pred, pred == y, step=i)
+        confs.append(conf); oks.append(ok)
+        opt.zero_grad(); lossf(logit, torch.tensor([y], device=device)).backward(); opt.step()
+        if (i + 1) % eval_every == 0:
+            hist["conf"].append(float(np.mean(confs[-eval_every:])))
+            hist["ok"].append(float(np.mean(oks[-eval_every:])))
+            hist["ece"].append(float(banc.ece_score(confs, oks)))
+            print(f"[{name}] {i+1:6d}  ece={hist['ece'][-1]:.3f}  "
+                  f"acc={np.mean(oks):.3f}  ({time.time()-t0:.0f}s)", flush=True)
+
+    meta = {"fragment": name, "parent": parent_id, "parent_n": int(parent_n),
+            "cycle": 0, "n_new": int(i + 1),
+            "seeds": {"init": int(init_seed), "data": int(data_seed), "eval": None},
+            "heldout_sha256": None, "code_sha": code_sha,
+            "metrics": {"ece_final": hist["ece"][-1] if hist["ece"] else None,
+                        "acc_final": float(np.mean(oks)) if oks else None}}
+    etat.save_bundle(out_dir, model, mem, hist, meta)
+    print(f"[{name}] paquet -> {out_dir}  ({time.time()-t0:.0f}s, {i+1} interactions)")
+    return out_dir
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--fragment", required=True)
+    ap.add_argument("--init-seed", type=int, required=True)
+    ap.add_argument("--data-seed", type=int, required=True)
+    ap.add_argument("--n", type=int, default=5000)
+    ap.add_argument("--out", required=True)
+    ap.add_argument("--parent", default=None)
+    ap.add_argument("--pool", type=int, default=1200)
+    ap.add_argument("--budget-seconds", type=int, default=None)
+    ap.add_argument("--code-sha", default="local")
+    a = ap.parse_args()
+    print("device :", "cuda" if torch.cuda.is_available() else "cpu")
+    run_fragment(a.fragment, a.init_seed, a.data_seed, a.n, a.out,
+                 parent_dir=a.parent, pool_n=a.pool,
+                 budget_seconds=a.budget_seconds, code_sha=a.code_sha)
+
+
+if __name__ == "__main__":
+    main()
