@@ -137,8 +137,8 @@ def fuse(paths, heldout_path, device="cpu"):
 
     frag_ece = [evaluate(b["model"], None, heldout, device)["ece"] for b in bundles]
     best_frag, best_frag_ece = int(np.argmin(frag_ece)), float(np.min(frag_ece))
-    n_inter = sum(int(b["meta"].get("parent_n", 0)) for b in bundles[:1]) + \
-        sum(len(b["hist"].get("ok", [])) for b in bundles)
+    parent_n = int(bundles[0]["meta"].get("parent_n", 0))   # partage : compte UNE fois
+    n_inter = parent_n + sum(int(b["meta"].get("n_new", 0)) for b in bundles)
 
     res = {"ok": True, "raisons": raisons, "frag_ece": frag_ece,
            "best_frag_ece": best_frag_ece, "n_interactions": int(n_inter)}

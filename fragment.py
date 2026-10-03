@@ -29,7 +29,7 @@ import etat
 
 def run_fragment(name, init_seed, data_seed, n_inter, out_dir,
                  parent_dir=None, pool_n=1200, eval_every=100,
-                 budget_seconds=None, code_sha="local", device="cpu"):
+                 budget_seconds=None, code_sha="local", heldout_path=None, device="cpu"):
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     parent_n = 0
@@ -38,7 +38,7 @@ def run_fragment(name, init_seed, data_seed, n_inter, out_dir,
     if parent_dir:
         b = etat.load_bundle(parent_dir, device)
         model, mem = b["model"], b["mem"]
-        parent_n = int(b["meta"].get("parent_n", 0)) + len(b["hist"].get("ok", []))
+        parent_n = int(b["meta"].get("parent_n", 0)) + int(b["meta"].get("n_new", 0))
         parent_id = b["meta"].get("fragment", "?")
     else:
         torch.manual_seed(int(init_seed))
@@ -82,7 +82,8 @@ def run_fragment(name, init_seed, data_seed, n_inter, out_dir,
     meta = {"fragment": name, "parent": parent_id, "parent_n": int(parent_n),
             "cycle": 0, "n_new": int(i + 1),
             "seeds": {"init": int(init_seed), "data": int(data_seed), "eval": None},
-            "heldout_sha256": None, "code_sha": code_sha,
+            "heldout_sha256": (etat.sha256_file(heldout_path) if heldout_path else None),
+            "code_sha": code_sha,
             "metrics": {"ece_final": hist["ece"][-1] if hist["ece"] else None,
                         "acc_final": float(np.mean(oks)) if oks else None}}
     etat.save_bundle(out_dir, model, mem, hist, meta)
@@ -101,11 +102,13 @@ def main():
     ap.add_argument("--pool", type=int, default=1200)
     ap.add_argument("--budget-seconds", type=int, default=None)
     ap.add_argument("--code-sha", default="local")
+    ap.add_argument("--heldout", default=None)
     a = ap.parse_args()
     print("device :", "cuda" if torch.cuda.is_available() else "cpu")
     run_fragment(a.fragment, a.init_seed, a.data_seed, a.n, a.out,
                  parent_dir=a.parent, pool_n=a.pool,
-                 budget_seconds=a.budget_seconds, code_sha=a.code_sha)
+                 budget_seconds=a.budget_seconds, code_sha=a.code_sha,
+                 heldout_path=a.heldout)
 
 
 if __name__ == "__main__":

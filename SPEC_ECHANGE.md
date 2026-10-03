@@ -69,16 +69,27 @@ déborde. Le code utilise int32 partout, la spec s'aligne.
 {
   "format": "bebe-etat/1",
   "fragment": "local" | "gh-<run_id>-<shard>",
-  "parent": "<id du paquet ancêtre commun>",
+  "parent": "<fragment>@<code_sha>#<cycle>",
   "created_utc": "...",
   "n_interactions": 12345,
-  "arch": {"layers": 4, "dim": 256, "alphabet": "..."},
+  "arch": {"d": 128, "nl": 2, "heads": 4, "nv": 39},
   "seeds": {"init": 1234, "data": 5678, "eval": 999},
+  "cycle": 3,
+  "parent_n": 400000,
+  "n_new": 40000,
   "heldout_sha256": "<sha256 de heldout.npz>",
   "code_sha": "<git commit du genome>",
   "metrics": {"ece": 0.022, "acc": 0.595, "conf": 0.593, "aurc": 0.183}
 }
 ```
+
+**C1 — arch = valeurs LUES DU MODULE, jamais en dur.** Le modèle réel est
+`Bebe(d=128, nl=2, heads=4, nv=39)` (banc.py:84). Les champs sont
+`d / nl / heads / nv`, tels que `etat.arch_of()` les écrit — un fragment
+doit pouvoir se RECONSTRUIRE à partir de ce seul objet.
+**C2 — 3 champs exigés par §3/§6** : `cycle` (règle de doublon),
+`parent_n` (pas de double compte), `n_new` (interactions locales du cycle,
+et `n_interactions = parent_n + n_new`).
 
 **Règle dure** : les seeds sont lues des valeurs EFFECTIVES du run
 (banc.py a `SEED = 1234` en dur + `manual_seed(SEED+1)`) — jamais une
@@ -108,7 +119,7 @@ l'alpha-sweep valide.
 
 ---
 
-## 5. Invariants DURS de fusion (ajouts v1.1)
+## 5. Invariants DURS de fusion (v1.1, complétés v1.2)
 
 | Condition                                            | Décision            |
 |------------------------------------------------------|---------------------|
@@ -117,6 +128,12 @@ l'alpha-sweep valide.
 | **`code_sha` différent** (ajout LYNX)                | **REFUS** — même init ne suffit pas si le genome a bougé : le bassin de perte n'est plus le même |
 | même parent + même (fragment, cycle, seed_data)      | REFUS (doublon)     |
 | `parent` différent                                   | REFUS (pas la même famille) |
+
+**C4 — `parent` doit porter une identité NON AMBIGUE** : `<fragment>@<code_sha>#<cycle>`
+(ou sha256 de son meta.json). Le nom du fragment seul ("local", "root") est
+trop faible : la clause « parent différent → REFUS » serait inopérante.
+`etat.check_invariants` vérifie l'égalité de `parent` — le format d'identité
+est celui ci-dessus.
 
 ---
 
@@ -179,7 +196,7 @@ le dit explicitement. Aucun calcul hors projet.
 
 ---
 
-## 10. Questions tranchées (v1.1)
+## 10. Questions tranchées (v1.1, revue v1.2)
 
 - (a) cap mémoire : **50k POST-consolidation, LRU** (§1.1).
 - (b) N>1 : **sweeps pairwise itérés**, ni grille complète ni greedy pur (§6).
