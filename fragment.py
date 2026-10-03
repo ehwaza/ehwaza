@@ -51,16 +51,16 @@ def run_fragment(name, init_seed, data_seed, n_inter, out_dir,
     lossf = torch.nn.CrossEntropyLoss()
     rng = random.Random(int(data_seed))
     pool = [banc.gen_item(rng) for _ in range(int(pool_n))]
-    items = [pool[i % pool_n] for i in range(int(n_inter))]
 
     hist = {"conf": [], "ok": [], "ece": []}
     confs, oks = [], []
     t0 = time.time()
     i = 0
-    for i, (src, cible, _) in enumerate(items):
+    for i in range(int(n_inter)):
         if budget_seconds and (time.time() - t0) > budget_seconds:
             print(f"[budget] coupe a {i} interactions ({budget_seconds}s)", flush=True)
             break
+        src, cible, _ = pool[i % pool_n]        # indexation paresseuse : O(1) memoire
         ids = banc.to_ids(src).unsqueeze(0).to(device)
         y = banc.VOCAB[cible]
         model.train()
@@ -78,16 +78,20 @@ def run_fragment(name, init_seed, data_seed, n_inter, out_dir,
             hist["conf"].append(float(np.mean(confs[-eval_every:])))
             hist["ok"].append(float(np.mean(oks[-eval_every:])))
             hist["ece"].append(float(banc.ece_score(confs, oks)))
+            dt = time.time() - t0
             print(f"[{name}] {i+1:6d}  ece={hist['ece'][-1]:.3f}  "
-                  f"acc={np.mean(oks):.3f}  ({time.time()-t0:.0f}s)", flush=True)
+                  f"acc={np.mean(oks):.3f}  {dt:.0f}s  {1000*dt/(i+1):.1f} ms/it", flush=True)
 
+    dt = time.time() - t0
     meta = {"fragment": name, "parent": parent_id, "parent_n": int(parent_n),
             "cycle": 0, "n_new": int(i + 1),
             "seeds": {"init": int(init_seed), "data": int(data_seed), "eval": None},
             "heldout_sha256": (etat.sha256_file(heldout_path) if heldout_path else None),
             "code_sha": code_sha,
             "metrics": {"ece_final": hist["ece"][-1] if hist["ece"] else None,
-                        "acc_final": float(np.mean(oks)) if oks else None}}
+                        "acc_final": float(np.mean(oks)) if oks else None,
+                        "ms_per_iter": round(1000.0 * dt / max(i + 1, 1), 3),
+                        "items_per_s": round((i + 1) / max(dt, 1e-9), 1)}}
     etat.save_bundle(out_dir, model, mem, hist, meta)
     print(f"[{name}] paquet -> {out_dir}  ({time.time()-t0:.0f}s, {i+1} interactions)")
     return out_dir
