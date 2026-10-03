@@ -39,11 +39,13 @@ def run_fragment(name, init_seed, data_seed, n_inter, out_dir,
         b = etat.load_bundle(parent_dir, device)
         model, mem = b["model"], b["mem"]
         parent_n = int(b["meta"].get("parent_n", 0)) + int(b["meta"].get("n_new", 0))
-        parent_id = b["meta"].get("fragment", "?")
+        pm = b["meta"]                                    # C4 : identite NON ambigue
+        parent_id = f'{pm.get("fragment")}@{pm.get("code_sha")}#{pm.get("cycle")}'
     else:
         torch.manual_seed(int(init_seed))
         model = banc.Bebe().to(device)
         mem = etat.MemoireConsolidee(k=5)
+        parent_id = "root"                                # geniteur : le bebe nait
 
     opt = torch.optim.SGD(model.parameters(), lr=3e-4)
     lossf = torch.nn.CrossEntropyLoss()
