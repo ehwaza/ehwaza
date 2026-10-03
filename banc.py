@@ -262,7 +262,7 @@ def run_bras(n_inter: int, log_every: int = 100):
     # --- B (supervise) : entrainement batch sur les 3/4 premiers items,
     #     puis fige ; temperature scaling sur le quart suivant (verite).
     modelB = Bebe().to(DEVICE)
-    optB = torch.optim.Adam(modelB.parameters(), lr=1e-3)
+    optB = torch.optim.Adam(modelB.parameters(), lr=1e-3, foreach=True)
     lossf = nn.CrossEntropyLoss()
     split = int(n_inter * 0.75)
     modelB.train()
