@@ -22,6 +22,9 @@ on:
       data_seed_base:
         description: "seed_data de base (chaque shard prend base+shard)"
         default: "10000"
+      shards:
+        description: "liste JSON des shards = nombre de fragments paralleles"
+        default: "[0,1,2,3]"
 
 permissions:
   contents: write
@@ -33,7 +36,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1, 2, 3]
+        shard: ${{ fromJSON(github.event.inputs.shards) }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
