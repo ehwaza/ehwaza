@@ -4,5 +4,6 @@ __pycache__/
 sorties*/
 etat_courant/
 etat_nouveau/
+etat_racine/
 frags/
 cache/
