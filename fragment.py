@@ -32,6 +32,9 @@ def run_fragment(name, init_seed, data_seed, n_inter, out_dir,
                  budget_seconds=None, code_sha="local", heldout_path=None, device="cpu"):
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
+    # code_sha = hash de CONTENU du genome (identique local / Colab / GitHub) -> fusion possible
+    # (aligne sur entrainer_local.py ; un commit git differe d'un depot a l'autre)
+    code_sha = etat.sha256_file(Path(banc.__file__))[:12]
     parent_n = 0
     parent_id = "root"
 
