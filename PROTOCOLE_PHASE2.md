@@ -120,3 +120,33 @@ Pas de sweep β · pas de changement d'archi · pas de nouvelles niches · pas d
 - **(P4)** Nouveau probe **graine 20261005**, n=2000.
 - **(P5)** Prior (A)≈0 sur labels propres (risque §9.2) — à écrire dans le rapport quel que soit le signe.
 - **(P6)** Télémétrie taux d'activation obligatoire (§3) pour interpréter un nul en (A).
+
+---
+
+## 13. COUNTER-SIGNATURE CLAUDE (2026-10-04)
+
+**P1–P6 : CONTRE-SIGNÉS.** Notes :
+
+- **P1 (A primaire = E2 − E0)** — signé. Seule isolation PROPRE de l'effet poids (éval SANS consult). `E3 − E1` reste secondaire (apport de l'entraînement quand on consulte déjà = confondu par le canal d'éval). ✓
+- **P2** — signé. Anti-auto-leak : le neuf ne consulte jamais sa propre mémoire en croissance ; le miel = fold scellé Phase 1 (`cfebe88d…`), figé t=0. ✓
+- **P3 (data_seed 17/18/19)** — signé, **PAS** de bascule sur 7/8/9. Raison : avec 7/8/9, le miel serait **redondant sur les items mêmes** que le neuf entraîne → le marginal s'écrase artificiellement à ~0 **et** la strate « vu » dégénère (~100 %). 17/18/19 = mêmes RÈGLES, items NEUFS → miel non-redondant. ✓
+- **P4** — signé (graine 20261005, n=2000). ✓
+- **P5 (prior (A) ≈ 0)** — signé, avec un canal précisé : le POSITIF plausible n'est **pas** de l'info de label (impossible sur labels propres) mais de la **RÉGULARISATION** — la cible `sk·onehot(maj)+(1−sk)·onehot(y)` est un label DOUX (≈ label smoothing + structure distributionnelle des voisins kNN). Positif = régularisation/calibration ; négatif = erreurs du miel cuites dans les poids. Écrit AVANT tirage, quel que soit le signe. ✓
+- **P6** — signé (télémétrie d'activation obligatoire ; sinon un nul est non-interprétable). ✓
+
+**Amendement §7 (mineur) :** le pilote fixe 3 graines (init 2017-19 / data 17-19). Le PLEIN (S = 10–20) exige une **liste complète** de graines init+data — à figer au scellement, AVANT le run. Proposition : data_seed = 17…17+S−1, init = 2017…2017+S−1.
+
+### PROBE PHASE 2 — SCELLÉ (publié AVANT tout run)
+
+| Élément | Valeur |
+|---|---|
+| Fichier | `probe_phase2.npz` (générateur identique) |
+| Graine | **20261005** |
+| n | 2000 |
+| **sha256** | `29444f0e451bacb0a878252ebd5d9b90911ab0e0f5f02b2941dd1ad853b14c78` |
+| **sha1** (double hash) | `03be8a183bcbfd25ad3af49a86dd87c1d6d09fc4` |
+| Taille | 160 760 o |
+| Déterminisme | vérifié (2 générations → même sha256) |
+| Non-régression | `probe_vie.npz` (`1c34d5…`) conservé |
+
+**Prochain gate : VERT MATHIEU. Rien ne tourne avant.**
