@@ -42,8 +42,11 @@ def run_fragment(name, init_seed, data_seed, n_inter, out_dir,
         b = etat.load_bundle(parent_dir, device)
         model, mem = b["model"], b["mem"]
         parent_n = int(b["meta"].get("parent_n", 0)) + int(b["meta"].get("n_new", 0))
-        pm = b["meta"]                                    # C4 : identite NON ambigue
-        parent_id = f'{pm.get("fragment")}@{pm.get("code_sha")}#{pm.get("cycle")}'
+        pm = b["meta"]
+        # C4 : identite NON ambigue. Un enfant de la RACINE s'appelle "root" (convention
+        # entrainer_local) pour que le local/Colab/GitHub partagent le meme id de famille.
+        parent_id = ("root" if pm.get("fragment") == "root"
+                     else f'{pm.get("fragment")}@{pm.get("code_sha")}#{pm.get("cycle")}')
     else:
         torch.manual_seed(int(init_seed))
         model = banc.Bebe().to(device)
