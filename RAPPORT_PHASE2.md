@@ -1,7 +1,7 @@
 # RAPPORT — PHASE 2 : LE MIEL AJOUTE-T-IL SUR UNE ABEILLE COMPÉTENTE ?
 
 **Date :** 2026-10-04 · **Auteurs :** Claude (harnais, agrégateur, éval) × LYNX (protocole, entraineur, abeilles) ·
-**Statut :** compute-matched rendu ; **lot step-matched EN ATTENTE (§5)**.
+**Statut :** compute-matched ET step-matched rendus (2 lots, S = 10 × 3 niches, 54 runs step tous rc 0, `step_matched_strict=true`).
 
 ---
 
@@ -30,8 +30,8 @@ Phase 1 (répondue) : *le miel PORTE-t-il du signal ?* → OUI (corrige un neuf 
 
 ## 2. HEADLINE
 
-1. **Le miel est un OUTIL DE TROUS :** sur une abeille compétente, il ajoute **+0.29 à +0.40** d'accuracy là où la bee est **ignorante** (les autres niches), et **~0 à légèrement négatif** sur **sa propre niche**.
-2. **Le miel est un POISON AU CUIT :** faire *apprendre* la bee avec la cible-miel (bras A) **dégrade sa niche propre** (−0.031 à −0.042, robuste sur 10 graines × 3 niches) — c'est le « prior » de LYNX, confirmé avec son signe.
+1. **Le miel est un OUTIL DE TROUS :** sur une abeille compétente, il ajoute **+0.29 à +0.40** d'accuracy (compute) / **+0.31 à +0.43** (step) là où la bee est **ignorante** (les autres niches), et **~0 à légèrement négatif** sur **sa propre niche**.
+2. **Le miel est un POISON AU CUIT :** faire *apprendre* la bee avec la cible-miel (bras A) **dégrade sa niche propre** — robuste sur 10 graines × 3 niches, **ET à pas égal** : essence A = −0.036 / −0.007 / −0.034 (step), IC < 0 les 3 niches ; le signe tient, le déficit de pas n'en portait qu'une partie de la magnitude.
 
 ---
 
@@ -79,11 +79,36 @@ Chaque abeille est lue **sur sa propre niche** (essence) vs les autres (transfer
 
 ---
 
-## 5. RÉSULTATS — step-matched (n = 50000 fixe) — **EN ATTENTE (lot ~16:15)**
+## 5. RÉSULTATS — step-matched (n = 50000 fixe, 54 runs, `step_matched_strict=true`)
 
-Le déclencheur est re-rempli : gap compute-matched = **6.28 %** (> 5 %). Le lot step (54 runs neufs, `n=50000` exact) doit départager si le négatif de (A) essence tient à **pas égal** (effet réel) ou était porté par le **déficit de pas** du bras miel. Sections B/A à compléter à réception.
+Lot step rendu (9 vagues de 6 runs, **tous rc 0**). Même verdict lu **côte à côte** : le négatif de (A) essence tenait-il à **pas égal** (effet réel) ou était-il porté par le **déficit de pas** du bras miel (~6 %, partie du traitement) ? Réponse : **il tient** — signe négatif conservé, IC < 0, les 3 niches, 30 graines.
 
-*(Rappel méthode : compute-matched = même budget machine 600 s → le bras T_miel fait ~6 % de pas en moins. L'écart de pas est **partie du traitement**, pas un bug.)*
+### (B) inférence — B = E1−E0 (compute | step)
+
+| niche | taux act. | essence compute | essence step | transfert compute | transfert step |
+|---|---|---|---|---|---|
+| n0 rep | ~45 / 44.6 % | −0.0020 *(croise 0)* | +0.0063 *(croise 0)* | +0.3176 | +0.3122 |
+| n1 arith\|miroir | ~25 / 25.0 % | −0.0217 *(nég.)* | −0.0278 *(nég.)* | +0.2861 | +0.3175 |
+| n2 saut\|rnd | ~35 / 34.5 % | −0.0006 *(croise 0)* | −0.0008 *(croise 0)* | +0.4045 | +0.4297 |
+
+→ **Transfert stable et fort aux deux budgets** (+0.31 / +0.32 / +0.43), IC > 0 partout. La valeur du miel sur les **angles morts** ne dépend pas du budget de pas.
+
+### (A) entraînement avec la cible-miel — A = E2−E0 (compute | step)
+
+| niche | essence compute | essence step | transfert compute | transfert step |
+|---|---|---|---|---|
+| n0 rep | −0.0362 IC[−0.0468,−0.0263] | **−0.0365** IC[−0.0468,−0.0258] | +0.0187 | +0.0186 |
+| n1 arith\|miroir | −0.0311 IC[−0.0412,−0.0212] | **−0.0074** IC[−0.0133,−0.0016] | +0.0003 | +0.0000 |
+| n2 saut\|rnd | −0.0419 IC[−0.0509,−0.0317] | **−0.0339** IC[−0.0403,−0.0274] | +0.0014 | +0.0008 |
+
+→ **Le négatif de (A) essence est un EFFET, pas un artefact de pas** : signe conservé, IC < 0, 30 graines. Le déficit de pas gonflait la magnitude sur n1 (−0.031 → −0.007) et n2 (−0.042 → −0.034) ; il ne portait **pas** le signe. n0 est identique (−0.0362 → −0.0365).
+
+### Lecture globale (les deux lots)
+
+- **(B) transfert ≫ 0** aux deux budgets → « l'épisodique se consulte », robuste.
+- **(A) essence < 0** aux deux budgets → « le générique ne se cuit pas », robuste.
+- **Secondaires** (step) : E3−E0 essence = −0.084 / −0.032 / −0.057 (tout-miel + consult pire que rien sur sa niche) ; E3−E1 essence = −0.091 / −0.005 / −0.057.
+- **P6** : taux d'activation de la cible-miel, step = 44.6 / 25.0 / 34.5 % (compute 45 / 25 / 35) → le levier s'est déclenché aux deux budgets ; le négatif de (A) n'est **pas** mécanique.
 
 ---
 
@@ -101,7 +126,7 @@ Le déclencheur est re-rempli : gap compute-matched = **6.28 %** (> 5 %). Le lot
 - Base **compétente** (acc ~0.6–0.7) : le verdict est « miel marginal sur un compétent », plus « bat le hasard ».
 - **S = 10** (plancher protocole) : verdict **directionnel + largeur par bloc** ; δ = 0.02 **non promis**.
 - Chevauchement probe = upper bound (histogramme). Condition de run : machine partagée avec les outils LYNX (~14 % résiduel).
-- **Step-matched non encore rendu** (§5).
+- **Step-matched rendu** (§5) : le **signe** de (A) essence tient à pas égal (30 graines, IC < 0) ; la **magnitude** était partiellement gonflée par le déficit de pas sur n1/n2 (n0 inchangé).
 
 ---
 
@@ -111,4 +136,4 @@ Candidats notés, **non validés** : miel **bigramme** (observation unigramme = 
 
 ---
 
-*Fichiers : `test_de_vie_phase2.py`, `charger_miel.py`, `runs_plein_local.json`, `rapport_p2_plein.json`.*
+*Fichiers : `test_de_vie_phase2.py`, `charger_miel.py`, `runs_plein_local.json`, `rapport_p2_plein.json` (compute) · `runs_step_plein_local.json`, `rapport_p2_step_plein.json`, `step_plein_meta.json` (step).*

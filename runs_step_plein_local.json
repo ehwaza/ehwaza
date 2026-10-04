@@ -1,0 +1,128 @@
+{
+ "n0": {
+  "17": {
+   "nu": "F:/becvide/colab_ready/bebe-ia/resultats/p2_step/s17_nu/etat",
+   "miel": "F:/becvide/colab_ready/bebe-ia/resultats/p2_step/s17_miel/etat"
+  },
+  "18": {
+   "nu": "F:/becvide/colab_ready/bebe-ia/resultats/p2_step/s18_nu/etat",
+   "miel": "F:/becvide/colab_ready/bebe-ia/resultats/p2_step/s18_miel/etat"
+  },
+  "19": {
+   "nu": "F:/becvide/colab_ready/bebe-ia/resultats/p2_step/s19_nu/etat",
+   "miel": "F:/becvide/colab_ready/bebe-ia/resultats/p2_step/s19_miel/etat"
+  },
+  "20": {
+   "nu": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n0_s20_nu/etat",
+   "miel": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n0_s20_miel/etat"
+  },
+  "21": {
+   "nu": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n0_s21_nu/etat",
+   "miel": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n0_s21_miel/etat"
+  },
+  "22": {
+   "nu": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n0_s22_nu/etat",
+   "miel": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n0_s22_miel/etat"
+  },
+  "23": {
+   "nu": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n0_s23_nu/etat",
+   "miel": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n0_s23_miel/etat"
+  },
+  "24": {
+   "nu": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n0_s24_nu/etat",
+   "miel": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n0_s24_miel/etat"
+  },
+  "25": {
+   "nu": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n0_s25_nu/etat",
+   "miel": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n0_s25_miel/etat"
+  },
+  "26": {
+   "nu": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n0_s26_nu/etat",
+   "miel": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n0_s26_miel/etat"
+  }
+ },
+ "n1": {
+  "27": {
+   "nu": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n1_s27_nu/etat",
+   "miel": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n1_s27_miel/etat"
+  },
+  "28": {
+   "nu": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n1_s28_nu/etat",
+   "miel": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n1_s28_miel/etat"
+  },
+  "29": {
+   "nu": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n1_s29_nu/etat",
+   "miel": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n1_s29_miel/etat"
+  },
+  "30": {
+   "nu": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n1_s30_nu/etat",
+   "miel": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n1_s30_miel/etat"
+  },
+  "31": {
+   "nu": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n1_s31_nu/etat",
+   "miel": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n1_s31_miel/etat"
+  },
+  "32": {
+   "nu": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n1_s32_nu/etat",
+   "miel": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n1_s32_miel/etat"
+  },
+  "33": {
+   "nu": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n1_s33_nu/etat",
+   "miel": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n1_s33_miel/etat"
+  },
+  "34": {
+   "nu": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n1_s34_nu/etat",
+   "miel": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n1_s34_miel/etat"
+  },
+  "35": {
+   "nu": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n1_s35_nu/etat",
+   "miel": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n1_s35_miel/etat"
+  },
+  "36": {
+   "nu": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n1_s36_nu/etat",
+   "miel": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n1_s36_miel/etat"
+  }
+ },
+ "n2": {
+  "37": {
+   "nu": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n2_s37_nu/etat",
+   "miel": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n2_s37_miel/etat"
+  },
+  "38": {
+   "nu": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n2_s38_nu/etat",
+   "miel": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n2_s38_miel/etat"
+  },
+  "39": {
+   "nu": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n2_s39_nu/etat",
+   "miel": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n2_s39_miel/etat"
+  },
+  "40": {
+   "nu": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n2_s40_nu/etat",
+   "miel": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n2_s40_miel/etat"
+  },
+  "41": {
+   "nu": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n2_s41_nu/etat",
+   "miel": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n2_s41_miel/etat"
+  },
+  "42": {
+   "nu": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n2_s42_nu/etat",
+   "miel": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n2_s42_miel/etat"
+  },
+  "43": {
+   "nu": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n2_s43_nu/etat",
+   "miel": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n2_s43_miel/etat"
+  },
+  "44": {
+   "nu": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n2_s44_nu/etat",
+   "miel": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n2_s44_miel/etat"
+  },
+  "45": {
+   "nu": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n2_s45_nu/etat",
+   "miel": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n2_s45_miel/etat"
+  },
+  "46": {
+   "nu": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n2_s46_nu/etat",
+   "miel": "F:/becvide/colab_ready/bebe-ia/resultats/p2_plein_step/n2_s46_miel/etat"
+  }
+ }
+}
