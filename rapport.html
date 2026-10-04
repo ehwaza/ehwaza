@@ -1,0 +1,296 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8">
+<style>
+@page { size: A4; margin: 16mm 15mm; }
+body { font-family: "Segoe UI", Arial, sans-serif; font-size: 11pt; color:#1a1a1a; line-height:1.5; }
+h1 { font-size: 21pt; border-bottom:3px solid #333; padding-bottom:6px; margin-bottom:4px; }
+h2 { font-size: 15pt; margin-top:24px; border-bottom:1px solid #ccc; padding-bottom:3px; }
+h3 { font-size: 12.5pt; margin-top:16px; }
+code { background:#f2f2f2; padding:1px 4px; border-radius:3px; font-family: Consolas, monospace; font-size:10pt; }
+table { border-collapse: collapse; width:100%; margin:10px 0; font-size:10pt; }
+th, td { border:1px solid #bbb; padding:4px 8px; text-align:left; vertical-align:top; }
+th { background:#ececec; }
+hr { border:none; border-top:1px solid #ddd; margin:20px 0; }
+strong { color:#000; }
+</style></head><body>
+<h1>RAPPORT — TEST DE VIE DE LA RUCHE (premier verdict sur données réelles)</h1>
+<p><strong>Date :</strong> 2026-10-04 · <strong>Auteurs :</strong> Claude (agrégateur + harnais) × LYNX (writer + abeilles) ·
+<strong>Statut :</strong> verdict primaire rendu, décomposition pré-enregistrée appliquée.</p>
+<hr />
+<h2>0. Pourquoi ce test existe</h2>
+<p>Le held-out classique est <strong>contaminé</strong> (au-delà de ~300k interactions, il ne mesure plus la
+calibration mais la mémorisation). On l'a jeté. Le nouveau verdict de la ruche est <strong>le test de vie</strong> :
+<em>une abeille neuve apprend-elle mieux AVEC le miel (la mémoire collective) qu'SANS ?</em></p>
+<hr />
+<h2>1. ENGAGEMENT / GÉNÉALOGIE (scellé avant tout tirage)</h2>
+<table>
+<thead>
+<tr>
+<th>Élément</th>
+<th>Valeur</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Probe (scellé)</td>
+<td><code>probe_vie.npz</code> — sha256 <code>1c34d5efa67638bef639a72204bf6033cb4863dbe36fef2512854616a9af228b</code></td>
+</tr>
+<tr>
+<td>Graine probe</td>
+<td><code>20261004</code> (⊥ des niches <code>data_seed</code> 7/8/9) — n = 2000 items</td>
+</tr>
+<tr>
+<td>Déterminisme probe</td>
+<td>vérifié : 2 générations → même sha</td>
+</tr>
+<tr>
+<td>Nectar</td>
+<td><code>ehwaza/bebe-ia</code>, commit <code>b871661</code>, <code>resultats/nectar_lignes.jsonl</code></td>
+</tr>
+<tr>
+<td>Nectar — blob git (LF)</td>
+<td>sha256 <code>cfebe88d112820d2ccefc1cf2705bd69bcce4be9ab79e57c121beabc4b80e0a4</code> (844 164 o)</td>
+</tr>
+<tr>
+<td>Nectar — fichier local (CRLF)</td>
+<td>sha256 <code>293e7734d1875b94e0ab21b4097c30ed60c4460382529f168ed730df2edf4615</code> (844 167 o)</td>
+</tr>
+<tr>
+<td>Écart blobs</td>
+<td>3 octets = 3 fins de ligne (<code>core.autocrlf</code>)</td>
+</tr>
+<tr>
+<td>Lignes <code>h[:16]</code></td>
+<td><code>caf9ea4280a3fa73</code> · <code>ed28088771caafad</code> · <code>dcbc2b08701b687e</code></td>
+</tr>
+<tr>
+<td>Chevauchement contexte</td>
+<td><strong>0.591</strong> — calculé par LYNX ET recalculé par Claude (convergents)</td>
+</tr>
+<tr>
+<td>Chevauchement — note</td>
+<td><strong>UPPER BOUND</strong> : <code>vec</code> = histogramme de caractères ; 2 <code>src</code> distincts peuvent partager le même octet</td>
+</tr>
+<tr>
+<td>Bootstrap</td>
+<td>2000 rééchantillons, graine 5 (reproductible)</td>
+</tr>
+<tr>
+<td>β</td>
+<td><strong>0.5, figé AVANT tout résultat réel</strong> — pas de sweep (un degré de liberté en moins)</td>
+</tr>
+<tr>
+<td>Graines</td>
+<td>10 (abaissées ; voir §5.e)</td>
+</tr>
+<tr>
+<td>Chance (base)</td>
+<td>1/39 = 0.026</td>
+</tr>
+<tr>
+<td>Gel</td>
+<td>poids init graine <code>s</code>, <strong>aucun entraînement</strong>, miel au <code>consult</code> seulement ; les deux bras d'une paire partagent les poids</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>2. HEADLINE</h2>
+<ol>
+<li><strong>Un miel de ruche A CORRIGÉ une abeille neuve GELÉE (chance → .3–.4) sur sa niche ET sur les autres.</strong></li>
+<li><strong>Mais la décomposition montre que le transfert est dominé par les contextes VUS ; la généralisation au neuf est faible.</strong></li>
+</ol>
+<hr />
+<h2>3. MÉTHODE</h2>
+<p>Miel = fold du nectar des 3 abeilles (<code>charger_miel</code>, union des clés + somme des compteurs, plafond
+par abeille — ici inactif, aucune abeille ne domine en volume). Abeille neuve = poids <strong>gelés</strong>
+(graine <code>s</code>, jamais entraînés) + mémoire <strong>vide</strong> vs <strong>miel</strong>. Deux bras appariés, mêmes poids.
+Deux modes d'usage du miel :</p>
+<ul>
+<li><strong>SOUPLE (verdict primaire)</strong> : <code>p = (1−β)·p_modele + β·p_knn</code>, <code>p_knn = one-hot(maj)·sk</code>.</li>
+<li><strong>DUR (témoin)</strong> : si <code>sk&gt;0.5</code> → <code>pred=maj</code>, <code>conf=sk</code>.</li>
+</ul>
+<p>Probe scellé → 2 blocs <strong>essence</strong> (règles de SA niche) / <strong>transfert</strong> (règles des autres), croisés
+avec <strong>vu / non-vu</strong> (le contexte du probe a-t-il déjà été vu par les abeilles ? 59.1 % oui).</p>
+<hr />
+<h2>4. RÉSULTATS</h2>
+<h3>4.1 Verdict primaire — MIEL UTILE sur les 3 niches, les 2 modes</h3>
+<table>
+<thead>
+<tr>
+<th>niche</th>
+<th>mode</th>
+<th>essence (vide→miel)</th>
+<th>transfert (vide→miel)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>n0 (rep)</td>
+<td>souple</td>
+<td><strong>+0.304</strong> (.0235→.3271)</td>
+<td><strong>+0.369</strong> (.0340→.4034)</td>
+</tr>
+<tr>
+<td>n1 (arith|miroir)</td>
+<td>souple</td>
+<td><strong>+0.434</strong> (.0313→.4653)</td>
+<td><strong>+0.305</strong> (.0324→.3369)</td>
+</tr>
+<tr>
+<td>n2 (saut|rnd)</td>
+<td>souple</td>
+<td><strong>+0.305</strong> (.0367→.3416)</td>
+<td><strong>+0.392</strong> (.0288→.4205)</td>
+</tr>
+<tr>
+<td>n0</td>
+<td>dur</td>
+<td>+0.000 (.0235→.0235)</td>
+<td>+0.065 (.0340→.0993)</td>
+</tr>
+<tr>
+<td>n1</td>
+<td>dur</td>
+<td>+0.013 (.0313→.0447)</td>
+<td>+0.079 (.0324→.1116)</td>
+</tr>
+<tr>
+<td>n2</td>
+<td>dur</td>
+<td>+0.117 (.0367→.1538)</td>
+<td>+0.009 (.0288→.0378)</td>
+</tr>
+</tbody>
+</table>
+<p>Les deux bras sont un modèle <strong>à la chance</strong> (.024–.045). Donc « MIEL UTILE » se lit ici comme
+« <strong>le miel bat un neuf au hasard</strong> » (conséquence de l'accord <em>gel</em>) — PAS « un neuf compétent ».</p>
+<h3>4.2 Décomposition vu / non-vu (SOUPLE) — le cœur du résultat</h3>
+<table>
+<thead>
+<tr>
+<th>niche</th>
+<th>strate</th>
+<th>vide→miel</th>
+<th>diff</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>n0</td>
+<td>essence <strong>vu</strong></td>
+<td>.0234→.4269</td>
+<td><strong>+0.404</strong></td>
+</tr>
+<tr>
+<td>n0</td>
+<td>essence non-vu</td>
+<td>.0237→.2194</td>
+<td>+0.196</td>
+</tr>
+<tr>
+<td>n0</td>
+<td>transfert <strong>vu</strong></td>
+<td>.0376→.5424</td>
+<td><strong>+0.505</strong></td>
+</tr>
+<tr>
+<td>n0</td>
+<td>transfert non-vu</td>
+<td>.0283→.1877</td>
+<td>+0.159</td>
+</tr>
+<tr>
+<td>n1</td>
+<td>essence <strong>vu</strong></td>
+<td>.0324→.4638</td>
+<td><strong>+0.431</strong></td>
+</tr>
+<tr>
+<td>n1</td>
+<td>essence non-vu</td>
+<td>.0283→.4690</td>
+<td>+0.441</td>
+</tr>
+<tr>
+<td>n1</td>
+<td>transfert <strong>vu</strong></td>
+<td>.0379→.5796</td>
+<td><strong>+0.542</strong></td>
+</tr>
+<tr>
+<td>n1</td>
+<td>transfert non-vu</td>
+<td>.0269→.0902</td>
+<td>+0.063</td>
+</tr>
+<tr>
+<td>n2</td>
+<td>essence <strong>vu</strong></td>
+<td>.0451→.6561</td>
+<td><strong>+0.611</strong></td>
+</tr>
+<tr>
+<td>n2</td>
+<td>essence non-vu</td>
+<td>.0283→.0310</td>
+<td><strong>+0.003</strong></td>
+</tr>
+<tr>
+<td>n2</td>
+<td>transfert <strong>vu</strong></td>
+<td>.0301→.4543</td>
+<td>+0.424</td>
+</tr>
+<tr>
+<td>n2</td>
+<td>transfert non-vu</td>
+<td>.0262→.3563</td>
+<td>+0.330</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Lecture :</strong> sur le <strong>vu</strong>, le miel atteint .42–.66 ; sur le <strong>non-vu</strong>, il tombe à .03–.36.
+Le « transfert d'essence » est donc <strong>surtout de la récupération</strong> de contextes déjà vus ; la
+<strong>généralisation au contexte réellement neuf est faible</strong> (cf. §5.b).</p>
+<hr />
+<h2>5. AJOUTS EXIGÉS (conditions d'accord LYNX — pris tels quels)</h2>
+<p><strong>a) Engagement</strong> → §1 (bloc dédié dans <code>rapport_reel.json</code>).</p>
+<p><strong>b) Seule cellule où l'IC croise zéro = pas d'effet détectable.</strong> <code>souple / n2 / essence_nonvu</code> :
+diff <strong>+0.003</strong>, IC95 <strong>[−0.0007, +0.0062]</strong> → <strong>traverse zéro</strong>. C'est la cellule la plus forte du
+niveau 2 (le miel n'aide pas sur la niche <code>saut|rnd</code> pour un contexte neuf), pas une anecdote.</p>
+<p><strong>c) IC dégénérés σ=0 = résultats identiques entre graines, IC non informative.</strong> Blocs concernés :
+<code>dur / n0 / essence</code>, <code>dur / n0 / essence_vu</code>, <code>dur / n0 / essence_nonvu</code>, <code>dur / n1 / essence_vu</code>,
+<code>dur / n2 / transfert_vu</code>. Ne pas y lire une précision inexistante.</p>
+<p><strong>d) DUR vs SOUPLE — couverture contre précision, même verdict.</strong> Sommet de vérification dur :
+n_ov = <strong>132/2000</strong> overrides, précision <strong>.879</strong>. Souple : n_ov = <strong>1692/2000</strong>, précision <strong>.452</strong>.
+Le verdict seul (« MIEL UTILE » partout) lirait une fausse <strong>équivalence d'amplitude</strong> : le dur donne
++0.000/+0.013 là où le souple donne +0.30/+0.43. Même direction, <strong>amplitude très différente</strong>.</p>
+<p><strong>e) n_requis par bloc.</strong> <code>n_requis &gt; 10</code> sur <strong>13 blocs</strong>, maximum <strong>145</strong> (<code>souple / n2 / essence_vu</code>).
+→ <strong>10 graines n'atteignent PAS la cible de largeur</strong> sur ces blocs : le verdict reste <strong>directionnel</strong> ;
+la précision de l'IC y est en dessous de δ = 0.02.</p>
+<p><code>sk</code> (distribution, identique aux 2 modes — même consultation) : moy <strong>.275</strong>, p50 .283, p90 .454,
+p99 .585, max <strong>.705</strong>. La masse est <strong>sous 0.5</strong> : le dur ne mord qu'à la queue (132), mais juste
+quand il mord (précision .88).</p>
+<hr />
+<h2>6. GLOSSAIRE</h2>
+<ul>
+<li><strong>Gel</strong> — l'abeille neuve n'est pas entraînée : ses poids restent à l'init. On mesure donc le
+  miel <strong>seul</strong>, pas un apprentissage.</li>
+<li><strong>Récupération vs généralisation</strong> — le miel restitue d'abord ce que les abeilles ont <strong>vu</strong>
+  (récupération) ; il généralise faiblement à des contextes <strong>neufs</strong>.</li>
+</ul>
+<hr />
+<h2>7. LIMITES</h2>
+<ul>
+<li>Base à la <strong>chance</strong> (gel) : « MIEL UTILE » = bat un neuf au hasard, pas un neuf compétent.</li>
+<li>Probe à <strong>graine distincte</strong> (pas disjoint en contexte : 59.1 % vu).</li>
+<li><strong>10 graines</strong> : suffisant pour la direction, insuffisant pour la largeur sur 13 blocs (§5.e).</li>
+<li>Chevauchement = upper bound (histogramme de caractères).</li>
+</ul>
+<hr />
+<h2>8. OUVERTURE (NON TESTÉE ICI)</h2>
+<p>Le <strong>warm-start d'un neuf compétent</strong> (apprendre <em>avec</em> le miel, au sens des poids) est la <strong>Phase 2</strong> :
+même protocole, mais un neuf entraîné. <strong>Non testé dans ce rapport.</strong></p>
+<hr />
+<p><em>Fichiers : <code>F:\becvide\test_de_vie.py</code> (harnais), <code>charger_miel.py</code> (agrégateur), <code>bebe/nectar.py</code>
+(writer vendorfé), <code>rapport_reel.json</code> (données brutes + engagement + drapeaux).</em></p>
+</body></html>
