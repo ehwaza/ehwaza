@@ -1,12 +1,14 @@
-# Fragment GitHub du bebe — N fragments en parallele, puis fusion.
+# Fragment GitHub du bebe — N shards de DISTRIBUTIONS DIFFERENTES + CENTRAL + FUSION.
 #
-# Note ToS (exigee par LYNX) : ces runners servent de BENCHMARKS du projet bebe.
-# Tout le calcul est lie au projet de ce depot (entrainement + mesure de son
-# propre modele). Aucun usage hors projet.
+# ToS : ces runners servent de BENCHMARKS du projet bebe (entrainement + mesure de
+# son propre modele). Aucun usage hors projet.
 #
-# Echange d'etat : Release "etat-courant" (assets = paquet etat.py + heldout.npz).
-# Chaque fragment : restore -> entraine (budget < 6h) -> upload.
-# Le job fusion : telecharge les fragments, fusionne, republie etat-courant.
+# Protocole (LYNX + DeepSeek) :
+#  - chaque shard apprend une DISTRIBUTION differente (--regles) -> complementarite ;
+#  - le CENTRAL voit EXACTEMENT le meme multiset (concat des pools) + meme budget ;
+#  - critere PRIMAIRE : ECE(fusion) <= ECE(central) + marge  -> "accelerateur" ;
+#  - ablation shard rnd en secours (fusion --exclure).
+# Echange d'etat : release "etat-courant" (assets = paquet etat.py + heldout.npz).
 
 name: fragment-bebe
 
@@ -14,17 +16,17 @@ on:
   workflow_dispatch:
     inputs:
       n_interactions:
-        description: "PLAFOND d'interactions ; le budget temps coupe avant (anti-emballement)"
+        description: "PLAFOND d'interactions par fragment ; le budget coupe avant"
         default: "5000000"
       budget_minutes:
-        description: "budget temps par fragment (min, garder < 330 = cap 6h GitHub)"
-        default: "300"
+        description: "budget temps PAR FRAGMENT (min) ; le central a 4x"
+        default: "10"
       data_seed_base:
-        description: "seed_data de base (chaque shard prend base+shard)"
+        description: "seed_data de base (shard i -> base+i)"
         default: "10000"
-      shards:
-        description: "liste JSON des shards = nombre de fragments paralleles"
-        default: "[0,1,2,3]"
+      shards_spec:
+        description: "JSON des shards [{shard,regles,pool}]"
+        default: '[{"shard":0,"regles":"rep","pool":300},{"shard":1,"regles":"arith","pool":300},{"shard":2,"regles":"miroir,saut","pool":300},{"shard":3,"regles":"rnd","pool":300}]'
 
 permissions:
   contents: write
@@ -36,75 +38,93 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: ${{ fromJSON(github.event.inputs.shards) }}
+        include: ${{ fromJSON(github.event.inputs.shards_spec) }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - name: dependances (torch CPU)
-        run: |
-          pip install --quiet torch --index-url https://download.pytorch.org/whl/cpu
-          pip install --quiet numpy
-      - name: restaurer etat-courant (si existe)
+        with: { python-version: "3.11" }
+      - name: dependances
+        run: pip install --quiet torch --index-url https://download.pytorch.org/whl/cpu && pip install --quiet numpy
+      - name: restaurer etat-courant
         continue-on-error: true
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+        run: mkdir -p etat_courant && gh release download etat-courant -D etat_courant --clobber || echo "naissance"
+      - name: entrainer shard ${{ matrix.shard }} (regles=${{ matrix.regles }})
         run: |
-          mkdir -p etat_courant
-          gh release download etat-courant -D etat_courant --clobber \
-            || echo "pas d'etat-courant : le bebe nait"
-      - name: entrainer le fragment
-        run: |
-          PARENT=""
-          INIT=1234
-          if [ -f etat_courant/meta.json ]; then
-            PARENT="--parent etat_courant"
-            INIT=$(python -c "import json;print(json.load(open('etat_courant/meta.json'))['seeds']['init'])")
-          fi
+          PARENT=""; INIT=1234
+          if [ -f etat_courant/meta.json ]; then PARENT="--parent etat_courant"; INIT=$(python -c "import json;print(json.load(open('etat_courant/meta.json'))['seeds']['init'])"); fi
           DATA=$(( ${{ github.event.inputs.data_seed_base }} + ${{ matrix.shard }} ))
-          python fragment.py \
-            --fragment "gh-${{ github.run_id }}-s${{ matrix.shard }}" \
-            --init-seed "$INIT" \
-            --data-seed "$DATA" \
+          python fragment.py --fragment "gh-${{ github.run_id }}-s${{ matrix.shard }}" \
+            --init-seed "$INIT" --data-seed "$DATA" \
+            --regles "${{ matrix.regles }}" --pool ${{ matrix.pool }} \
             --n ${{ github.event.inputs.n_interactions }} \
             --budget-seconds $(( ${{ github.event.inputs.budget_minutes }} * 60 )) \
-            --code-sha "${{ github.sha }}" \
-            --out "frags/s${{ matrix.shard }}" $PARENT
+            --heldout heldout.npz --out "frags/s${{ matrix.shard }}" $PARENT
       - uses: actions/upload-artifact@v4
         with:
           name: frag-${{ matrix.shard }}
           path: frags/s${{ matrix.shard }}
           retention-days: 7
 
+  central:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - name: dependances
+        run: pip install --quiet torch --index-url https://download.pytorch.org/whl/cpu && pip install --quiet numpy
+      - name: restaurer etat-courant
+        continue-on-error: true
+        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+        run: mkdir -p etat_courant && gh release download etat-courant -D etat_courant --clobber || echo "naissance"
+      - name: entrainer le CENTRAL (concat des shards, meme budget total)
+        env:
+          SHARDS: ${{ github.event.inputs.shards_spec }}
+        run: |
+          PARENT=""; INIT=1234
+          if [ -f etat_courant/meta.json ]; then PARENT="--parent etat_courant"; INIT=$(python -c "import json;print(json.load(open('etat_courant/meta.json'))['seeds']['init'])"); fi
+          SPEC=$(python -c "import json,os; spec=json.loads(os.environ['SHARDS']); b=int('${{ github.event.inputs.data_seed_base }}'); print(json.dumps([{'data_seed':b+s['shard'],'regles':s.get('regles',''),'pool':s.get('pool',300)} for s in spec]))")
+          echo "central-spec = $SPEC"
+          python fragment.py --fragment "central-${{ github.run_id }}" \
+            --init-seed "$INIT" --data-seed ${{ github.event.inputs.data_seed_base }} \
+            --n $(( 4 * ${{ github.event.inputs.n_interactions }} )) \
+            --budget-seconds $(( 4 * ${{ github.event.inputs.budget_minutes }} * 60 )) \
+            --heldout heldout.npz --central-spec "$SPEC" --out "frags/central" $PARENT
+      - uses: actions/upload-artifact@v4
+        with:
+          name: central
+          path: frags/central
+          retention-days: 7
+
   fusion:
-    needs: fragments
+    needs: [fragments, central]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
+        with: { python-version: "3.11" }
       - name: dependances
-        run: |
-          pip install --quiet torch --index-url https://download.pytorch.org/whl/cpu
-          pip install --quiet numpy
+        run: pip install --quiet torch --index-url https://download.pytorch.org/whl/cpu && pip install --quiet numpy
       - uses: actions/download-artifact@v4
-        with:
-          path: frags
-          pattern: frag-*
-      - name: fusionner + verdict
+        with: { path: frags, pattern: frag-* }
+      - uses: actions/download-artifact@v4
+        with: { name: central, path: frags/central }
+      - name: fusionner (critere PRIMAIRE = fusion ~ central)
         run: |
-          DIRS=$(find frags -maxdepth 2 -name meta.json -printf '%h\n' | sort)
+          DIRS=$(find frags -maxdepth 2 -name meta.json | grep -v '/central/' | xargs -n1 dirname | sort)
           echo "fragments : $DIRS"
-          python fusion.py $DIRS --heldout heldout.npz --out etat_nouveau
+          python fusion.py $DIRS --heldout heldout.npz --central frags/central --out etat_nouveau
+      - name: ABLATION (fusion sans le shard rnd) — en secours, non bloquant
+        continue-on-error: true
+        run: |
+          DIRS=$(find frags -maxdepth 2 -name meta.json | grep -v '/central/' | xargs -n1 dirname | sort)
+          python fusion.py $DIRS --heldout heldout.npz --central frags/central --exclure "s3" || echo "ablation non concluante"
       - name: publier etat-courant
         if: ${{ success() && hashFiles('etat_nouveau/meta.json') != '' }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
         run: |
           cp heldout.npz etat_nouveau/
           gh release delete etat-courant --yes --cleanup-tag || true
-          gh release create etat-courant etat_nouveau/* \
-            --title "etat-courant" \
-            --notes "code_sha=${{ github.sha }}  run=${{ github.run_id }}"
+          gh release create etat-courant etat_nouveau/* --title "etat-courant" --notes "run=${{ github.run_id }}"
