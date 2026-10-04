@@ -128,9 +128,12 @@ def concat_hist(hists):
 
 
 # ----------------------------------------------------------------- orchestration
-def fuse(paths, heldout_path, device="cpu"):
+def fuse(paths, heldout_path, device="cpu", central_path=None, exclure=None):
     heldout = etat.load_heldout(heldout_path)
     bundles = [etat.load_bundle(p, device) for p in paths]
+    if exclure:                                    # ablation : on retire des fragments
+        bundles = [b for b in bundles
+                   if not any(tok and tok in (b["meta"].get("fragment") or "") for tok in exclure)]
     ok_inv, raisons = etat.check_invariants(bundles)
     if not ok_inv:
         return {"ok": False, "raisons": raisons}
@@ -165,8 +168,22 @@ def fuse(paths, heldout_path, device="cpu"):
         sd, e_gagnant, trace = fuse_multi([b["model"] for b in bundles], heldout, device=device)
         res.update({"fusion_multi_ece": e_gagnant, "trace": trace})
 
+    # SECONDAIRE (biais connu : le meilleur fragment est un expert de SA shard)
     res.update({"gagnant": "fusion-poids", "ece_gagnant": e_gagnant,
-                "verdict": "OK" if e_gagnant < best_frag_ece else "ECHEC"})
+                "verdict_secondaire": "OK" if e_gagnant < best_frag_ece else "ECHEC"})
+
+    # PRIMAIRE : fusion ~ CENTRAL (meme data, meme budget, seul le topo change) -- le vrai test
+    if central_path:
+        cb = etat.load_bundle(central_path, device)
+        e_central = evaluate(cb["model"], None, heldout, device)["ece"]
+        marge = 0.005
+        res["central_ece"] = e_central
+        res["verdict_primaire"] = ("OK (accelerateur)" if e_gagnant <= e_central + marge
+                                   else "ECHEC vs central")
+        res["verdict"] = res["verdict_primaire"]
+    else:
+        res["verdict_primaire"] = res["verdict_secondaire"]
+        res["verdict"] = res["verdict_secondaire"]
 
     if res["verdict"] == "OK":
         arch = etat.arch_of(bundles[0]["model"])
@@ -187,8 +204,11 @@ def main():
     ap.add_argument("frags", nargs="+")
     ap.add_argument("--heldout", required=True)
     ap.add_argument("--out", default=None)
+    ap.add_argument("--central", default=None, help="paquet du central (critere PRIMAIRE)")
+    ap.add_argument("--exclure", default=None, help="fragments a exclure (ablation), separes par ,")
     a = ap.parse_args()
-    r = fuse(a.frags, a.heldout)
+    exclure = [x.strip() for x in a.exclure.split(",") if x.strip()] if a.exclure else None
+    r = fuse(a.frags, a.heldout, central_path=a.central, exclure=exclure)
     print(json.dumps({k: v for k, v in r.items()
                       if k not in ("fused_model", "fused_mem", "fused_hist", "alpha_curve")},
                      indent=2, ensure_ascii=False, default=str))
