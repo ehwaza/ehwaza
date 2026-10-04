@@ -104,8 +104,8 @@ def verdict_phase2(per_niche):
             for nom, key in (("B=E1-E0", "B"), ("A=E2-E0", "A"),
                              ("E3-E0", "S_E3E0"), ("E3-E1", "S_E3E1")):
                 m_, sd, ic = tv.ic95_bootstrap(dd[key])
-                row[nom] = {"diff": round(m_, 4), "sigma_d": round(sd, 4),
-                            "ic95": [round(ic[0], 4), round(ic[1], 4)],
+                row[nom] = {"diff": round(m_, 6), "sigma_d": round(sd, 6),
+                            "ic95": [round(ic[0], 6), round(ic[1], 6)],
                             "n_requis": tv.n_requis(sd)}
             out[k][bloc] = row
     return out
