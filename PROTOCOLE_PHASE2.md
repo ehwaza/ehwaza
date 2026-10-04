@@ -80,6 +80,15 @@ Pour un item **entraîné**, consult sur le miel fixe **avant** `add` :
 - Graines déclarées : data_seed du neuf = **17/18/19** (≠ 7/8/9 du rucher, ≠ graine probe) ; init = **2017/2018/2019** ; eval seed du harnais = déclaré par Claude au scellement.
 - Estimation de compute (ordre de grandeur, pour le vert de Mathieu) : pilot ~12 min (parallèle), plein ~1,5–3 h selon S et parallélisme.
 
+### 7bis. PLEIN — GRAINES FIGÉES (contre-signé Claude, 04/10 ~05:30)
+
+- **S = 10** (plancher §7) : le déclencheur step-matched rend le 2ᵉ lot obligatoire (gap ~6 % reproduit au pilote **ET** A-essence < 0) → 2 lots × S=20 ≈ 6,5 h > budget 3 h → plancher. Le pilote donne déjà `n_requis = 10` sur les blocs lus.
+- **data_seed :** n0 = 17…26 · n1 = 27…36 · n2 = 37…46. **init :** n0 = 2017…2026 · n1 = 2027…2036 · n2 = 2037…2046. Appariement data↔init **par index**.
+- **Unicité** par abeille (règle C4) ; ≠ 7/8/9 (rucher) ; ≠ 20261004 / 20261005 (probes).
+- Les graines pilot **n0 17/18/19** (`p2_pilote` + `p2_step`, déjà poussées) sont **réutilisées** comme 3 premières graines de n0.
+- **2 lots obligatoires** (compute-matched + step-matched), mêmes graines/bras/pools.
+- **Condition de run à documenter :** lots lancés sur la même machine que les outils LYNX (charge résiduelle ~14 % au repos, aucune autre charge lourde pendant les vagues).
+
 ---
 
 ## 8. Métriques et IC
@@ -93,7 +102,10 @@ Pour un item **entraîné**, consult sur le miel fixe **avant** `add` :
 
 ## 9. Risques ÉCRITS D'AVANCE (avant tout résultat)
 
-1. **(Claude)** La précision du miel (.452 global / .879 confiant) est **cuite dans les poids** de T_miel : un miel faux apprend des erreurs au neuf. C'est la question, pas un biais à corriger après coup.
+1. **(Claude)** La précision du miel (.452 global / .879 confiant en **v1** — **v2** après erratum
+   consult k=39→5 : DUR .706 / SOUPLE .517, rapport §4bis du 04/10 ~05:00) est **cuite dans les
+   poids** de T_miel : un miel faux apprend des erreurs au neuf. C'est la question, pas un biais à
+   corriger après coup.
 2. **(LYNX — prior ajouté)** Sur ce pool **synthétique à labels propres**, la cible-miel (§3) **ne peut pas apporter d'information de label neuve** (maj ≠ y n'est utile que si y est bruité). Prior honnête : **(A) ≈ 0 ± petit** ; un positif = bénéfice d'optimisation/calibration ; un négatif = contamination par les erreurs du miel. Écrire ce prior dans le rapport QUEL QUE SOIT le signe — pas de surprise a posteriori.
 3. **(Claude)** Chevauchement probe : même méthode, même note « upper bound histogramme », nouveau taux calculé et écrit.
 4. **(LYNX)** Si le taux d'activation de la cible-miel est faible en entraînement, un nul en (A) est **mécanique** (le levier ne s'est pas déclenché) : la télémétrie §3 est donc obligatoire pour INTERPRÉTER (A).
