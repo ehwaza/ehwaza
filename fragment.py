@@ -40,7 +40,7 @@ def _gen_filtre(rng, regles):
 def run_fragment(name, init_seed, data_seed, n_inter, out_dir,
                  parent_dir=None, pool_n=1200, eval_every=100,
                  budget_seconds=None, code_sha="local", heldout_path=None,
-                 regles=None, device="cpu"):
+                 regles=None, central_spec=None, device="cpu"):
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     # code_sha = hash de CONTENU du genome (identique local / Colab / GitHub) -> fusion possible
@@ -68,10 +68,20 @@ def run_fragment(name, init_seed, data_seed, n_inter, out_dir,
 
     opt = torch.optim.SGD(model.parameters(), lr=3e-4)
     lossf = torch.nn.CrossEntropyLoss()
-    rng = random.Random(int(data_seed))
-    pool = [_gen_filtre(rng, regles) for _ in range(int(pool_n))]
-    if regles:
-        print(f"[{name}] distribution restreinte aux regles : {sorted(regles)} | pool={pool_n}", flush=True)
+    if central_spec:
+        # CENTRAL : pool = CONCAT des pools des shards (MEME multiset qu'eux -> seul le topo change)
+        spec = json.loads(central_spec)
+        pool = []
+        for s in spec:
+            rr = random.Random(int(s["data_seed"]))
+            rg = set(x.strip() for x in s.get("regles", "").split(",") if x.strip()) or None
+            pool += [_gen_filtre(rr, rg) for _ in range(int(s.get("pool", 300)))]
+        print(f"[{name}] CENTRAL : concat de {len(spec)} shards -> pool={len(pool)} items", flush=True)
+    else:
+        rng = random.Random(int(data_seed))
+        pool = [_gen_filtre(rng, regles) for _ in range(int(pool_n))]
+        if regles:
+            print(f"[{name}] distribution restreinte aux regles : {sorted(regles)} | pool={pool_n}", flush=True)
 
     hist = {"conf": [], "ok": [], "ece": []}
     confs, oks = [], []
@@ -81,7 +91,7 @@ def run_fragment(name, init_seed, data_seed, n_inter, out_dir,
         if budget_seconds and (time.time() - t0) > budget_seconds:
             print(f"[budget] coupe a {i} interactions ({budget_seconds}s)", flush=True)
             break
-        src, cible, _ = pool[i % pool_n]        # indexation paresseuse : O(1) memoire
+        src, cible, _ = pool[i % len(pool)]     # indexation paresseuse : O(1) memoire
         ids = banc.to_ids(src).unsqueeze(0).to(device)
         y = banc.VOCAB[cible]
         model.train()
@@ -133,12 +143,14 @@ def main():
     ap.add_argument("--heldout", default=None)
     ap.add_argument("--regles", default=None,
                     help="regles de gen_item autorisees (ex: arith,rep). Vide = toutes")
+    ap.add_argument("--central-spec", default=None,
+                    help="JSON [{data_seed,regles,pool},...] -> pool = concat des shards (LE CONTROLE)")
     a = ap.parse_args()
     print("device :", "cuda" if torch.cuda.is_available() else "cpu")
     run_fragment(a.fragment, a.init_seed, a.data_seed, a.n, a.out,
                  parent_dir=a.parent, pool_n=a.pool,
                  budget_seconds=a.budget_seconds, code_sha=a.code_sha,
-                 heldout_path=a.heldout, regles=a.regles)
+                 heldout_path=a.heldout, regles=a.regles, central_spec=a.central_spec)
 
 
 if __name__ == "__main__":
