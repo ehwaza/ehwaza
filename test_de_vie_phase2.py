@@ -95,6 +95,38 @@ def comparer(runs, honey, items, beta=0.5):
     return per_niche
 
 
+def comparer_plein(runs_niche, honey, items, beta=0.5):
+    """runs_niche = {niche: {graine: {'nu':dir,'miel':dir}}}.
+    Chaque abeille est lue sur SA niche : le split essence/transfert depend de la niche d'entrainement."""
+    seats = _seats(items)
+    per_niche = {}
+    for k, runs in runs_niche.items():
+        m_ess = seats[k]
+        blocs = {"essence": {"B": [], "A": [], "S_E3E0": [], "S_E3E1": []},
+                 "transfert": {"B": [], "A": [], "S_E3E0": [], "S_E3E1": []}}
+        for seed, dirs in runs.items():
+            cells = cellules(dirs["nu"], dirs["miel"], honey, items, beta=beta)
+            for bloc, mask in (("essence", m_ess), ("transfert", ~m_ess)):
+                accs = {n: float(cells[n]["oks"][mask].mean()) for n in ("E0", "E1", "E2", "E3")}
+                d = blocs[bloc]
+                d["B"].append(accs["E1"] - accs["E0"])
+                d["A"].append(accs["E2"] - accs["E0"])
+                d["S_E3E0"].append(accs["E3"] - accs["E0"])
+                d["S_E3E1"].append(accs["E3"] - accs["E1"])
+        per_niche[k] = blocs
+    return per_niche
+
+
+def _est_plein(runs):
+    """True si le schema est niche -> graine -> {nu,miel} (3 niveaux),
+    False si graine -> {nu,miel} (2 niveaux)."""
+    first = next(iter(runs.values()))
+    if not isinstance(first, dict):
+        return False
+    any_val = next(iter(first.values()))
+    return isinstance(any_val, dict) and ("nu" in any_val or "miel" in any_val)
+
+
 def verdict_phase2(per_niche):
     out = {}
     for k, blocs in per_niche.items():
@@ -152,7 +184,10 @@ def main():
     runs = json.loads(Path(a.runs).read_text(encoding="utf-8"))
     honey = charger_miel_npz(a.miel)
     items = probe_phase2_items()
-    res = comparer(runs, honey, items, beta=a.beta)
+    if _est_plein(runs):
+        res = comparer_plein(runs, honey, items, beta=a.beta)
+    else:
+        res = comparer(runs, honey, items, beta=a.beta)
     print(json.dumps(verdict_phase2(res), indent=2, ensure_ascii=False))
 
 
