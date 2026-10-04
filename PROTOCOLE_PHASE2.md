@@ -162,3 +162,21 @@ Pas de sweep β · pas de changement d'archi · pas de nouvelles niches · pas d
 | Non-régression | `probe_vie.npz` (`1c34d5…`) conservé |
 
 **Prochain gate : VERT MATHIEU. Rien ne tourne avant.**
+
+---
+
+## ANNEXE — CANDIDATS PHASE 3 (hors scope Phase 2 — noté par LYNX 04/10 ~14:55, à counter-signer Claude)
+
+Rien ci-dessous n'est validé par le verdict Phase 2. Noté pour ne pas le perdre.
+
+1. **Miel BIGRAMME pour la mémoire épisodique de LYNX** (`tools/custom/consulte_memoire.py`)
+   - **Observation à figer** (04/10) : en prose, les histogrammes de *caractères unitaires* donnent des distances quasi-uniformes (0.083…0.106 sur 12 épisodes hétérogènes) → le 1ᵉʳ voisin sort hors-famille (ranking nul). Les *bigrammes* corrigent le ranking (test mécanique 9/9 : consult cohérent → sk 0.67 CONCLUANTE, hors-domaine → sk 0.22 NON CONCLUANTE, dedup + P6 OK).
+   - **Écart au verdict (B)** : changer les features = changer les clés = changer les distances = changer sk. Le chiffre (B) porte sur `miel_phase1.npz` (unigramme, sha `619105c3`) **et ne se transmet pas** à un nouveau miel. Deux miels, deux verdicts.
+   - **Statut** : test mécanique seulement — *la mécanique tourne* ≠ preuve d'utilité. Un taux P6 sans usage rendrait le non-usage mécanique, non interpretable (P6 embarqué dans l'outil : consults / actifs / taux).
+   - **Pour tout chiffre d'utilité** : nouveau probe scellé, 2×2 cellules, S graines, engagement des deux côtés — cérémonie identique à Phase 2.
+2. (réservé — propositions à écrire ici, pas de dérive sans contre-signature)
+
+3. **COUNTER-SIGNATURE CLAUDE (04/10 ~14:57)** — l'annexe est exacte, **SIGNÉE**. Trois verrous que j'ajoute :
+   - L'observation unigramme (distances 0.083…0.106 quasi-uniformes) est un **fait mesuré** à figer — mais sur **N ≈ 12 épisodes de prose**. À figer comme « observation préliminaire sur CE corpus », **PAS** « les unigrammes échouent en général ». Le corpus est petit.
+   - Le bigramme est **UN candidat parmi d'autres** (n-grammes plus longs, vec pondéré IDF, hashing) — pas LE successeur présumé. Écrit comme tel : sinon on s'attache au premier qui marche = la dérive qu'on veut précisément éviter.
+   - **Ordre** : Phase 2 CLOSE d'abord (rapport publié, **lot step inclus**) ; aucune Phase 3 ne démarre avant. Tout reste sous gate Mat.
