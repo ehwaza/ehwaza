@@ -29,6 +29,8 @@ import banc       # noqa: E402
 import etat       # noqa: E402
 import fusion     # noqa: E402
 
+CONSULT_K = 5     # nombre de voisins du consult (banc/harnais/loader LYNX) -- PAS la dim des cles
+
 
 def _genome_key(li):
     g = li.get("genome") or {}
@@ -36,9 +38,11 @@ def _genome_key(li):
             json.dumps(g.get("arch"), sort_keys=True))
 
 
-def _mem_de_tableaux(k, keys, yc, n, ok_num, ls):
-    """Construit une MemoireConsolidee depuis les 5 tableaux du nectar (ok = ok_num/n)."""
-    m = etat.MemoireConsolidee(k=int(k))
+def _mem_de_tableaux(keys, yc, n, ok_num, ls):
+    """Construit une MemoireConsolidee depuis les 5 tableaux du nectar (ok = ok_num/n).
+    NB : k = NOMBRE DE VOISINS (5, comme banc/harnais/loader LYNX), PAS la dimension
+    du vecteur (le nectar 'k' = NV = 39 est la largeur des cles, pas le k du consult)."""
+    m = etat.MemoireConsolidee(k=CONSULT_K)
     m.keys = np.asarray(keys, np.float32)
     m.y_counts = np.asarray(yc, np.int32)
     m.n = np.asarray(n, np.int32)
@@ -99,8 +103,7 @@ def charger_miel(lignes, cap_rule=True, genome_ref=None):
             keys, yc, n, ok_num, ls = nectar.lire_nectar(li)
             if int(np.asarray(n).sum()) == 0:
                 rap["refusees"].append({"abeille": ab, "raisons": ["Sigma n = 0"]}); continue
-            k = int(li["nectar"]["k"])
-            parts.append(_mem_de_tableaux(k, keys, yc, n, ok_num, ls))
+            parts.append(_mem_de_tableaux(keys, yc, n, ok_num, ls))
         if parts:
             bee_mems[ab] = parts[0] if len(parts) == 1 else fusion.merge_memoires(parts)
     if not bee_mems:
@@ -124,10 +127,22 @@ def charger_miel(lignes, cap_rule=True, genome_ref=None):
     return miel, rap
 
 
+def exporter_miel(miel, path):
+    """Exporte le miel au FORMAT DU CONTRAT --miel (LYNX) : keys f32, y_counts i32, n i32, ok f32.
+    Consult cote entrainement = banc.MemoireConsolidee(k=5) : memes tableaux -> memes sk."""
+    np.savez(path,
+             keys=np.ascontiguousarray(miel.keys, np.float32),
+             y_counts=np.ascontiguousarray(miel.y_counts, np.int32),
+             n=np.ascontiguousarray(miel.n, np.int32),
+             ok=np.ascontiguousarray(miel.ok, np.float32))
+    return path
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("jsonl")
     ap.add_argument("--no-cap", action="store_true")
+    ap.add_argument("--out", default=None, help="exporte le miel au format contrat --miel (npz)")
     a = ap.parse_args()
     lignes = nectar.lire_jsonl(a.jsonl)
     miel, rap = charger_miel(lignes, cap_rule=not a.no_cap)
@@ -135,6 +150,9 @@ def main():
     if miel is not None:
         print(json.dumps({"miel": {"cles": len(miel.keys), "sum_n": int(miel.n.sum()),
                                    "k": miel.k}}, ensure_ascii=False))
+        if a.out:
+            exporter_miel(miel, a.out)
+            print("miel ->", a.out)
 
 
 if __name__ == "__main__":

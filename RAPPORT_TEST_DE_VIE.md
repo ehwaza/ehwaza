@@ -1,7 +1,7 @@
 # RAPPORT — TEST DE VIE DE LA RUCHE (premier verdict sur données réelles)
 
 **Date :** 2026-10-04 · **Auteurs :** Claude (agrégateur + harnais) × LYNX (writer + abeilles) ·
-**Statut :** verdict primaire rendu, décomposition pré-enregistrée appliquée.
+**Version :** **v2 — chiffres corrigés** (voir §4bis ERRATUM) · **Statut :** verdict primaire rendu, décomposition pré-enregistrée appliquée.
 
 ---
 
@@ -27,17 +27,19 @@ calibration mais la mémorisation). On l'a jeté. Le nouveau verdict de la ruche
 | Lignes `h[:16]` | `caf9ea4280a3fa73` · `ed28088771caafad` · `dcbc2b08701b687e` |
 | Chevauchement contexte | **0.591** — calculé par LYNX ET recalculé par Claude (convergents) |
 | Chevauchement — note | **UPPER BOUND** : `vec` = histogramme de caractères ; 2 `src` distincts peuvent partager le même octet |
+| Miel (fold → npz) | `miel_phase1.npz` — sha256 `619105c33f5aed5e60b2c156a94b24bf815c405ea7a0e6eb20081a1fb70997af` (1925 clés, Σn = 260 392) |
+| Consult (k voisins) | **k = 5** (banc/harnais/loader LYNX) — voir §4bis |
 | Bootstrap | 2000 rééchantillons, graine 5 (reproductible) |
-| β | **0.5, figé AVANT tout résultat réel** — pas de sweep (un degré de liberté en moins) |
-| Graines | 10 (abaissées ; voir §5.e) |
+| β | **0.5, figé AVANT tout résultat réel** — pas de sweep |
+| Graines | 10 |
 | Chance (base) | 1/39 = 0.026 |
-| Gel | poids init graine `s`, **aucun entraînement**, miel au `consult` seulement ; les deux bras d'une paire partagent les poids |
+| Gel | poids init graine `s`, **aucun entraînement**, miel au `consult` seulement |
 
 ---
 
 ## 2. HEADLINE
 
-1. **Un miel de ruche A CORRIGÉ une abeille neuve GELÉE (chance → .3–.4) sur sa niche ET sur les autres.**
+1. **Un miel de ruche A CORRIGÉ une abeille neuve GELÉE (chance → .4–.5) sur sa niche ET sur les autres.**
 2. **Mais la décomposition montre que le transfert est dominé par les contextes VUS ; la généralisation au neuf est faible.**
 
 ---
@@ -45,9 +47,8 @@ calibration mais la mémorisation). On l'a jeté. Le nouveau verdict de la ruche
 ## 3. MÉTHODE
 
 Miel = fold du nectar des 3 abeilles (`charger_miel`, union des clés + somme des compteurs, plafond
-par abeille — ici inactif, aucune abeille ne domine en volume). Abeille neuve = poids **gelés**
-(graine `s`, jamais entraînés) + mémoire **vide** vs **miel**. Deux bras appariés, mêmes poids.
-Deux modes d'usage du miel :
+par abeille — ici inactif). Abeille neuve = poids **gelés** (graine `s`, jamais entraînés) + mémoire
+**vide** vs **miel**. Deux bras appariés, mêmes poids. Deux modes d'usage du miel :
 
 - **SOUPLE (verdict primaire)** : `p = (1−β)·p_modele + β·p_knn`, `p_knn = one-hot(maj)·sk`.
 - **DUR (témoin)** : si `sk>0.5` → `pred=maj`, `conf=sk`.
@@ -57,18 +58,18 @@ avec **vu / non-vu** (le contexte du probe a-t-il déjà été vu par les abeill
 
 ---
 
-## 4. RÉSULTATS
+## 4. RÉSULTATS (v2)
 
 ### 4.1 Verdict primaire — MIEL UTILE sur les 3 niches, les 2 modes
 
 | niche | mode | essence (vide→miel) | transfert (vide→miel) |
 |---|---|---|---|
-| n0 (rep) | souple | **+0.304** (.0235→.3271) | **+0.369** (.0340→.4034) |
-| n1 (arith\|miroir) | souple | **+0.434** (.0313→.4653) | **+0.305** (.0324→.3369) |
-| n2 (saut\|rnd) | souple | **+0.305** (.0367→.3416) | **+0.392** (.0288→.4205) |
-| n0 | dur | +0.000 (.0235→.0235) | +0.065 (.0340→.0993) |
-| n1 | dur | +0.013 (.0313→.0447) | +0.079 (.0324→.1116) |
-| n2 | dur | +0.117 (.0367→.1538) | +0.009 (.0288→.0378) |
+| n0 (rep) | souple | **+0.373** (.0235→.3966) | **+0.434** (.0340→.4676) |
+| n1 (arith\|miroir) | souple | **+0.480** (.0313→.5110) | **+0.383** (.0324→.4153) |
+| n2 (saut\|rnd) | souple | **+0.388** (.0367→.4243) | **+0.445** (.0288→.4739) |
+| n0 | dur | +0.228 (.0235→.2512) | +0.212 (.0340→.2458) |
+| n1 | dur | +0.170 (.0313→.2016) | +0.245 (.0324→.2774) |
+| n2 | dur | +0.253 (.0367→.2900) | +0.189 (.0288→.2177) |
 
 Les deux bras sont un modèle **à la chance** (.024–.045). Donc « MIEL UTILE » se lit ici comme
 « **le miel bat un neuf au hasard** » (conséquence de l'accord *gel*) — PAS « un neuf compétent ».
@@ -77,58 +78,75 @@ Les deux bras sont un modèle **à la chance** (.024–.045). Donc « MIEL UTILE
 
 | niche | strate | vide→miel | diff |
 |---|---|---|---|
-| n0 | essence **vu** | .0234→.4269 | **+0.404** |
-| n0 | essence non-vu | .0237→.2194 | +0.196 |
-| n0 | transfert **vu** | .0376→.5424 | **+0.505** |
-| n0 | transfert non-vu | .0283→.1877 | +0.159 |
-| n1 | essence **vu** | .0324→.4638 | **+0.431** |
-| n1 | essence non-vu | .0283→.4690 | +0.441 |
-| n1 | transfert **vu** | .0379→.5796 | **+0.542** |
-| n1 | transfert non-vu | .0269→.0902 | +0.063 |
-| n2 | essence **vu** | .0451→.6561 | **+0.611** |
-| n2 | essence non-vu | .0283→.0310 | **+0.003** |
-| n2 | transfert **vu** | .0301→.4543 | +0.424 |
-| n2 | transfert non-vu | .0262→.3563 | +0.330 |
+| n0 | essence **vu** | .0234→.5025 | **+0.479** |
+| n0 | essence non-vu | .0237→.2823 | +0.259 |
+| n0 | transfert **vu** | .0376→.6299 | **+0.592** |
+| n0 | transfert non-vu | .0283→.2158 | +0.188 |
+| n1 | essence **vu** | .0324→.5050 | **+0.473** |
+| n1 | essence non-vu | .0283→.5265 | +0.498 |
+| n1 | transfert **vu** | .0379→.7076 | **+0.670** |
+| n1 | transfert non-vu | .0269→.1181 | +0.091 |
+| n2 | essence **vu** | .0451→.8105 | **+0.765** |
+| n2 | essence non-vu | .0283→.0429 | **+0.015** |
+| n2 | transfert **vu** | .0301→.5044 | +0.474 |
+| n2 | transfert non-vu | .0262→.4163 | +0.390 |
 
-**Lecture :** sur le **vu**, le miel atteint .42–.66 ; sur le **non-vu**, il tombe à .03–.36.
-Le « transfert d'essence » est donc **surtout de la récupération** de contextes déjà vus ; la
-**généralisation au contexte réellement neuf est faible** (cf. §5.b).
+**Lecture :** sur le **vu**, le miel atteint .50–.81 ; sur le **non-vu**, il tombe à .03–.53, et
+s'effondre par endroits (`n2 essence non-vu` +0.015 ; `n1 transfert non-vu` +0.091). Le « transfert
+d'essence » est donc **surtout de la récupération** de contextes déjà vus ; la **généralisation au
+contexte réellement neuf est faible**.
+
+`sk` : moy **.397**, p50 .413, p90 .735, p99 .866, max **.996**.
 
 ---
 
-## 5. AJOUTS EXIGÉS (conditions d'accord LYNX — pris tels quels)
+## 4bis. ERRATUM — correction du `consult` (v1 → v2)
 
-**a) Engagement** → §1 (bloc dédié dans `rapport_reel.json`).
+**Défaut trouvé (04/10, ~05:00).** L'agrégateur réglait le `k` du `consult` sur la **dimension des
+clés** (`k` = 39 = NV) au lieu du **nombre de voisins** (`k` = **5**, la valeur de `banc.MemoireConsolidee`).
+Conséquence : les chiffres de la **v1** (rapport publié et audité) étaient calculés avec **39 voisins**.
 
-**b) Seule cellule où l'IC croise zéro = pas d'effet détectable.** `souple / n2 / essence_nonvu` :
-diff **+0.003**, IC95 **[−0.0007, +0.0062]** → **traverse zéro**. C'est la cellule la plus forte du
-niveau 2 (le miel n'aide pas sur la niche `saut|rnd` pour un contexte neuf), pas une anecdote.
+**Fix.** `charger_miel` force `k = 5` ; l'export `miel_phase1.npz` est **inchangé** (il ne contient que
+les tableaux, pas `k`). **Croisement prouvé** : le miel chargé par le **loader de LYNX**
+(`entrainer_local._charger_miel`, `banc.MemoireConsolidee(k=5)`) rend des `sk` **identiques** à mon
+fold — `max |Δsk| = 0.00` sur 2000 items. Aucun décalage train/éval ne subsiste.
 
-**c) IC dégénérés σ=0 = résultats identiques entre graines, IC non informative.** Blocs concernés :
-`dur / n0 / essence`, `dur / n0 / essence_vu`, `dur / n0 / essence_nonvu`, `dur / n1 / essence_vu`,
-`dur / n2 / transfert_vu`. Ne pas y lire une précision inexistante.
+**Ce qui change :** les chiffres (acc, `sk`, `ov_prec`) montent (avec k=5 la masse `sk>0.5` est bien
+plus fournie). **Ce qui ne change pas : la conclusion** — MIEL UTILE partout, transfert dominé par le vu.
 
-**d) DUR vs SOUPLE — couverture contre précision, même verdict.** Sommet de vérification dur :
-n_ov = **132/2000** overrides, précision **.879**. Souple : n_ov = **1692/2000**, précision **.452**.
-Le verdict seul (« MIEL UTILE » partout) lirait une fausse **équivalence d'amplitude** : le dur donne
-+0.000/+0.013 là où le souple donne +0.30/+0.43. Même direction, **amplitude très différente**.
+**Effet sur les addenda v1 :**
+- L'addendum **(b)** (« seule cellule où l'IC croise 0 » = `n2 essence non-vu`) **ne s'applique plus** :
+  avec k=5, **aucune** cellule ne croise 0 ; `n2 essence non-vu` = **+0.0145**, IC [+0.0101, +0.0185]
+  (petit mais positif). Le défaut k=39 créait un artefact de cellule croisant 0.
+- L'addendum **(c)** (σ=0) **ne s'applique plus** : plus aucun bloc dégénéré.
 
-**e) n_requis par bloc.** `n_requis > 10` sur **13 blocs**, maximum **145** (`souple / n2 / essence_vu`).
-→ **10 graines n'atteignent PAS la cible de largeur** sur ces blocs : le verdict reste **directionnel** ;
-la précision de l'IC y est en dessous de δ = 0.02.
+---
 
-`sk` (distribution, identique aux 2 modes — même consultation) : moy **.275**, p50 .283, p90 .454,
-p99 .585, max **.705**. La masse est **sous 0.5** : le dur ne mord qu'à la queue (132), mais juste
-quand il mord (précision .88).
+## 5. AJOUTS (conditions d'accord LYNX — appliqués au format v2)
+
+**a) Engagement** → §1 (+ bloc dans `rapport_reel.json`).
+
+**b)** cf. §4bis : la cellule qui croisait 0 était un artefact de k=39. En **v2**, la cellule la plus
+faible est `souple / n2 / essence_non-vu` = **+0.0145** IC [+0.0101, +0.0185] → **positive** (exclut 0),
+mais d'amplitude ~30× plus petite que le vu.
+
+**c)** None retiré. Blocs σ=0 : **aucun** en v2.
+
+**d) DUR vs SOUPLE — couverture contre précision, même verdict.** DUR : n_ov = **637/2000**, précision
+**.706**. SOUPLE : n_ov = **1722/2000**, précision **.517**. En v2, le DUR **se déclenche fortement**
+(sk monte à .996), donc les deux modes ne divergent plus d'amplitude (+0.23/+0.17/+0.25 vs
++0.37/+0.48/+0.39) — mais restent **distincts** (le souple voit plus, le dur est plus précis).
+
+**e) n_requis par bloc.** `n_requis > 10` sur **13 blocs**, maximum **147**.
+→ **10 graines n'atteignent PAS la cible de largeur** sur ces blocs : le verdict reste **directionnel**.
 
 ---
 
 ## 6. GLOSSAIRE
 
-- **Gel** — l'abeille neuve n'est pas entraînée : ses poids restent à l'init. On mesure donc le
-  miel **seul**, pas un apprentissage.
-- **Récupération vs généralisation** — le miel restitue d'abord ce que les abeilles ont **vu**
-  (récupération) ; il généralise faiblement à des contextes **neufs**.
+- **Gel** — l'abeille neuve n'est pas entraînée : ses poids restent à l'init. On mesure le miel **seul**.
+- **Récupération vs généralisation** — le miel restitue d'abord ce que les abeilles ont **vu** ; il
+  généralise faiblement à des contextes **neufs**.
 
 ---
 
@@ -136,17 +154,18 @@ quand il mord (précision .88).
 
 - Base à la **chance** (gel) : « MIEL UTILE » = bat un neuf au hasard, pas un neuf compétent.
 - Probe à **graine distincte** (pas disjoint en contexte : 59.1 % vu).
-- **10 graines** : suffisant pour la direction, insuffisant pour la largeur sur 13 blocs (§5.e).
+- **10 graines** : direction OK, largeur insuffisante sur 13 blocs (§5.e).
 - Chevauchement = upper bound (histogramme de caractères).
+- **v1 corrigée en v2** (§4bis) : le `consult` utilise k=5.
 
 ---
 
 ## 8. OUVERTURE (NON TESTÉE ICI)
 
 Le **warm-start d'un neuf compétent** (apprendre *avec* le miel, au sens des poids) est la **Phase 2** :
-même protocole, mais un neuf entraîné. **Non testé dans ce rapport.**
+protocole pré-enregistré, nouveau probe scellé (`probe_phase2.npz`, graine 20261005). **Non testé ici.**
 
 ---
 
-*Fichiers : `F:\becvide\test_de_vie.py` (harnais), `charger_miel.py` (agrégateur), `bebe/nectar.py`
-(writer vendorfé), `rapport_reel.json` (données brutes + engagement + drapeaux).*
+*Fichiers : `F:\becvide\test_de_vie.py` (harnais), `charger_miel.py` (agrégateur, k=5), `bebe/nectar.py`
+(writer vendorfé), `miel_phase1.npz`, `rapport_reel.json`, `_check_croise_miel.py` (preuve Δsk=0).*

@@ -26,6 +26,14 @@ rap["engagement"] = {
     "beta": 0.5, "beta_note": "FIGE AVANT tout resultat reel ; pas de sweep",
     "n_graines": 10, "chance_1sur39": 0.02564102564102564,
     "gel": "poids init graine s, AUCUN entrainement, miel au consult seulement",
+    "methode": {
+        "consult_k_voisins": 5,
+        "note_k": "CORRECTION 04/10 (v2) : le k du consult = 5 VOISINS (banc/harnais/loader LYNX). "
+                  "Le 1er passage utilisait par erreur k=39 (la DIMENSION des cles, pas le nb de voisins). "
+                  "Chiffres du rapport CORRIGES ; conclusion (MIEL UTILE, transfert domine par le vu) INCHANGEE. "
+                  "Croisement prouve : miel_phase1.npz charge par le loader de LYNX -> max |dsk| = 0.00.",
+        "miel_npz_sha256": "619105c33f5aed5e60b2c156a94b24bf815c405ea7a0e6eb20081a1fb70997af",
+    },
 }
 
 # drapeaux par bloc : IC croise 0 (b) et sigma=0 (c)
