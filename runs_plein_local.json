@@ -1,0 +1,128 @@
+{
+ "n0": {
+  "17": {
+   "nu": "resultats/p2_pilote/s17_nu/etat",
+   "miel": "resultats/p2_pilote/s17_miel/etat"
+  },
+  "18": {
+   "nu": "resultats/p2_pilote/s18_nu/etat",
+   "miel": "resultats/p2_pilote/s18_miel/etat"
+  },
+  "19": {
+   "nu": "resultats/p2_pilote/s19_nu/etat",
+   "miel": "resultats/p2_pilote/s19_miel/etat"
+  },
+  "20": {
+   "nu": "resultats/p2_plein/n0_s20_nu/etat",
+   "miel": "resultats/p2_plein/n0_s20_miel/etat"
+  },
+  "21": {
+   "nu": "resultats/p2_plein/n0_s21_nu/etat",
+   "miel": "resultats/p2_plein/n0_s21_miel/etat"
+  },
+  "22": {
+   "nu": "resultats/p2_plein/n0_s22_nu/etat",
+   "miel": "resultats/p2_plein/n0_s22_miel/etat"
+  },
+  "23": {
+   "nu": "resultats/p2_plein/n0_s23_nu/etat",
+   "miel": "resultats/p2_plein/n0_s23_miel/etat"
+  },
+  "24": {
+   "nu": "resultats/p2_plein/n0_s24_nu/etat",
+   "miel": "resultats/p2_plein/n0_s24_miel/etat"
+  },
+  "25": {
+   "nu": "resultats/p2_plein/n0_s25_nu/etat",
+   "miel": "resultats/p2_plein/n0_s25_miel/etat"
+  },
+  "26": {
+   "nu": "resultats/p2_plein/n0_s26_nu/etat",
+   "miel": "resultats/p2_plein/n0_s26_miel/etat"
+  }
+ },
+ "n1": {
+  "27": {
+   "nu": "resultats/p2_plein/n1_s27_nu/etat",
+   "miel": "resultats/p2_plein/n1_s27_miel/etat"
+  },
+  "28": {
+   "nu": "resultats/p2_plein/n1_s28_nu/etat",
+   "miel": "resultats/p2_plein/n1_s28_miel/etat"
+  },
+  "29": {
+   "nu": "resultats/p2_plein/n1_s29_nu/etat",
+   "miel": "resultats/p2_plein/n1_s29_miel/etat"
+  },
+  "30": {
+   "nu": "resultats/p2_plein/n1_s30_nu/etat",
+   "miel": "resultats/p2_plein/n1_s30_miel/etat"
+  },
+  "31": {
+   "nu": "resultats/p2_plein/n1_s31_nu/etat",
+   "miel": "resultats/p2_plein/n1_s31_miel/etat"
+  },
+  "32": {
+   "nu": "resultats/p2_plein/n1_s32_nu/etat",
+   "miel": "resultats/p2_plein/n1_s32_miel/etat"
+  },
+  "33": {
+   "nu": "resultats/p2_plein/n1_s33_nu/etat",
+   "miel": "resultats/p2_plein/n1_s33_miel/etat"
+  },
+  "34": {
+   "nu": "resultats/p2_plein/n1_s34_nu/etat",
+   "miel": "resultats/p2_plein/n1_s34_miel/etat"
+  },
+  "35": {
+   "nu": "resultats/p2_plein/n1_s35_nu/etat",
+   "miel": "resultats/p2_plein/n1_s35_miel/etat"
+  },
+  "36": {
+   "nu": "resultats/p2_plein/n1_s36_nu/etat",
+   "miel": "resultats/p2_plein/n1_s36_miel/etat"
+  }
+ },
+ "n2": {
+  "37": {
+   "nu": "resultats/p2_plein/n2_s37_nu/etat",
+   "miel": "resultats/p2_plein/n2_s37_miel/etat"
+  },
+  "38": {
+   "nu": "resultats/p2_plein/n2_s38_nu/etat",
+   "miel": "resultats/p2_plein/n2_s38_miel/etat"
+  },
+  "39": {
+   "nu": "resultats/p2_plein/n2_s39_nu/etat",
+   "miel": "resultats/p2_plein/n2_s39_miel/etat"
+  },
+  "40": {
+   "nu": "resultats/p2_plein/n2_s40_nu/etat",
+   "miel": "resultats/p2_plein/n2_s40_miel/etat"
+  },
+  "41": {
+   "nu": "resultats/p2_plein/n2_s41_nu/etat",
+   "miel": "resultats/p2_plein/n2_s41_miel/etat"
+  },
+  "42": {
+   "nu": "resultats/p2_plein/n2_s42_nu/etat",
+   "miel": "resultats/p2_plein/n2_s42_miel/etat"
+  },
+  "43": {
+   "nu": "resultats/p2_plein/n2_s43_nu/etat",
+   "miel": "resultats/p2_plein/n2_s43_miel/etat"
+  },
+  "44": {
+   "nu": "resultats/p2_plein/n2_s44_nu/etat",
+   "miel": "resultats/p2_plein/n2_s44_miel/etat"
+  },
+  "45": {
+   "nu": "resultats/p2_plein/n2_s45_nu/etat",
+   "miel": "resultats/p2_plein/n2_s45_miel/etat"
+  },
+  "46": {
+   "nu": "resultats/p2_plein/n2_s46_nu/etat",
+   "miel": "resultats/p2_plein/n2_s46_miel/etat"
+  }
+ }
+}
