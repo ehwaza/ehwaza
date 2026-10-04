@@ -27,14 +27,27 @@ import banc
 import etat
 
 
+def _gen_filtre(rng, regles):
+    """Item de banc.gen_item RESTREINT a un sous-ensemble de regles (distribution)."""
+    if not regles:
+        return banc.gen_item(rng)
+    while True:
+        it = banc.gen_item(rng)
+        if it[2] in regles:
+            return it
+
+
 def run_fragment(name, init_seed, data_seed, n_inter, out_dir,
                  parent_dir=None, pool_n=1200, eval_every=100,
-                 budget_seconds=None, code_sha="local", heldout_path=None, device="cpu"):
+                 budget_seconds=None, code_sha="local", heldout_path=None,
+                 regles=None, device="cpu"):
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     # code_sha = hash de CONTENU du genome (identique local / Colab / GitHub) -> fusion possible
     # (aligne sur entrainer_local.py ; un commit git differe d'un depot a l'autre)
     code_sha = etat.sha256_file(Path(banc.__file__))[:12]
+    if isinstance(regles, str):
+        regles = set(r.strip() for r in regles.split(",") if r.strip()) or None
     parent_n = 0
     parent_id = "root"
 
@@ -56,7 +69,9 @@ def run_fragment(name, init_seed, data_seed, n_inter, out_dir,
     opt = torch.optim.SGD(model.parameters(), lr=3e-4)
     lossf = torch.nn.CrossEntropyLoss()
     rng = random.Random(int(data_seed))
-    pool = [banc.gen_item(rng) for _ in range(int(pool_n))]
+    pool = [_gen_filtre(rng, regles) for _ in range(int(pool_n))]
+    if regles:
+        print(f"[{name}] distribution restreinte aux regles : {sorted(regles)} | pool={pool_n}", flush=True)
 
     hist = {"conf": [], "ok": [], "ece": []}
     confs, oks = [], []
@@ -93,7 +108,8 @@ def run_fragment(name, init_seed, data_seed, n_inter, out_dir,
             "cycle": 0, "n_new": int(i + 1),
             "seeds": {"init": int(init_seed), "data": int(data_seed), "eval": None},
             "heldout_sha256": (etat.sha256_file(heldout_path) if heldout_path else None),
-            "code_sha": code_sha,
+            "code_sha": code_sha, "source": "synthetique",
+            "regles": (sorted(regles) if regles else None),
             "metrics": {"ece_final": hist["ece"][-1] if hist["ece"] else None,
                         "acc_final": float(np.mean(oks)) if oks else None,
                         "ms_per_iter": round(1000.0 * dt / max(i + 1, 1), 3),
@@ -115,12 +131,14 @@ def main():
     ap.add_argument("--budget-seconds", type=int, default=None)
     ap.add_argument("--code-sha", default="local")
     ap.add_argument("--heldout", default=None)
+    ap.add_argument("--regles", default=None,
+                    help="regles de gen_item autorisees (ex: arith,rep). Vide = toutes")
     a = ap.parse_args()
     print("device :", "cuda" if torch.cuda.is_available() else "cpu")
     run_fragment(a.fragment, a.init_seed, a.data_seed, a.n, a.out,
                  parent_dir=a.parent, pool_n=a.pool,
                  budget_seconds=a.budget_seconds, code_sha=a.code_sha,
-                 heldout_path=a.heldout)
+                 heldout_path=a.heldout, regles=a.regles)
 
 
 if __name__ == "__main__":
